@@ -1,0 +1,12 @@
+{
+  "name": "renku-cloud",
+  "description": "Renku filmmaking skills connected to Renku Cloud at app.gorenku.com: nothing to install on your computer. Sign in once when Claude asks.",
+  "version": "0.2.0",
+  "author": {
+    "name": "Kerem Karatal"
+  },
+  "license": "MIT",
+  "homepage": "https://gorenku.com/renku-plugins/",
+  "repository": "https://github.com/GoRenku/renku-cloud-plugin",
+  "mcpServers": "./cloud.mcp.json"
+}

@@ -1,0 +1,41 @@
+{
+  "operations": [
+    {
+      "operation": "scene.update",
+      "scene": {
+        "id": "scene_scene_003",
+        "heading": "EXT. GALATA SHORE - DAWN",
+        "title": "The Galata Shore Transfer",
+        "blocks": [
+          {
+            "id": "screenplay_block_scene_003_action",
+            "type": "action",
+            "text": "Urban watches the convoy form along the shore."
+          }
+        ]
+      }
+    },
+    {
+      "operation": "reference.delete",
+      "reference": { "id": "screenplay_reference_scene_003_setting" }
+    },
+    {
+      "operation": "reference.add",
+      "reference": {
+        "key": "galata-setting",
+        "subject": { "type": "location", "id": "location_galata_shore" },
+        "target": { "type": "scene", "scene": { "id": "scene_scene_003" } },
+        "role": "setting"
+      }
+    },
+    {
+      "operation": "reference.add",
+      "reference": {
+        "key": "urban-shore-presence",
+        "subject": { "type": "castMember", "id": "cast_urban" },
+        "target": { "type": "scene", "scene": { "id": "scene_scene_003" } },
+        "role": "presence"
+      }
+    }
+  ]
+}

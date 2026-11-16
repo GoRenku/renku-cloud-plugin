@@ -1,0 +1,181 @@
+---
+name: scene-beat-designer
+description: Design and persist Renku Studio Scene Beats by reading Scene screenplay context, referenced Cast Members, Locations, Props, selected Movie Lookbook guidance, and user direction. Use for first Beat creation, focused Beat revisions, full reset, history inspection, or active-revision restoration.
+---
+
+# Scene Beat Designer
+
+## Renku Cloud
+
+When the Renku tools (`renku_command`, `renku_upload`, `renku_download`,
+`renku_view`, `renku_guide`) are present, Renku runs in Renku
+Cloud. This section then applies and takes precedence over any instruction
+below to stop when `renku` is unavailable.
+
+- Run the `renku ...` commands a step needs as one `renku_command` batch:
+  `{"commands": [{"args": ["screenplay", "beats", "list", "--scene", "<scene-id>", "--json"]}], "onFailure": "stop"}`.
+  There is no shell, so no pipes, redirects or `$(...)`. A command that needs
+  an id from an earlier answer goes in a second batch.
+- Your workbench is on your computer: the documents you write, saved answers
+  and notes. Send a document a command reads in that command's `files`, keyed
+  by the `tmp/` path the command names.
+- An answer over 100,000 characters, or any answer when `saveAnswers` is true,
+  comes back as a download link. Fetch it with `curl` and read it with jq,
+  sed or a script on your computer.
+- Read this skill's own files, including `samples/`, from the installed
+  plugin. The permission steps below do not apply to Renku commands.
+
+For Scene Beats:
+
+- Read context for many Scenes in one command by repeating `--scene` on
+  `screenplay beats context`; `screenplay beats storyboard status` takes
+  repeated `--scene` too.
+- For whole-screenplay coverage, write each Scene's document on your computer
+  and send every Scene's create or apply command in one batch, each document
+  in its own `files` entry. With `"onFailure": "continue"`, one invalid Scene
+  does not stop the others; fix and resend only the ones that failed.
+- Look at Beat storyboard images and visual references with `renku_view`.
+
+This skill requires the installed Renku runtime. If `renku` is unavailable, stop and direct the user to `https://gorenku.com`; do not substitute ad hoc files for the CLI-owned project state.
+
+## Efficient Command Use
+
+Use `--project <project-name>` on screenplay beats commands when the project is known. Read current Beat context once; list/show only for missing revision detail. Create, reset, and apply validate before writes. Separate validation is for validation-only intent or a review pause; retain a meaningful apply --dry-run when reviewing a proposed change. Use returned exact revision and Beat identities for the next step. Refresh context after relevant edits or intervening user review, and keep Storyboard/media review separate.
+
+When requesting visual references, resolve their `assetFileId` and `assetFileId`
+through `visualReferences.assets`. Lookbook placements retain their annotations
+and `assetFileId`; reference groups retain roles, subjects, and selection facts.
+
+Consult the relevant CLI reference/help once if syntax is unknown, then reuse verified syntax for this task. Do not discover syntax by attempting mutations. Do not invent `project list`. If a known permission denial blocks cache/output/config or local-network access, explain the requirement and use the authorized host permission flow; do not repeat the denied attempt, read secrets, disable cache persistence, or change permissions. `CLI026` means the mutation succeeded: report the notification warning without replaying the mutation.
+
+## Project Workspace
+
+Keep every agent-created working file inside the current Project's categorized
+`tmp/` tree. Never create operation JSON, Generation Specs, import manifests,
+QA images, downloads, crops, or scratch files at the Project root.
+
+- Use `tmp/operations/` for CLI authoring documents, including create, update,
+  design, analysis, Lookbook, Scene Beats, Shot Plan, and import JSON.
+- Use `tmp/operations/media-generation/` for Media Producer review and
+  provenance documents.
+- Use `tmp/media/` for temporary generated, downloaded, transformed, or cropped
+  media; use `tmp/qa/` for review evidence and `tmp/scratch/` for other temporary
+  inputs.
+- Create category folders lazily. Let Renku commands copy accepted content into
+  durable owner folders; never construct durable asset paths in the skill.
+- Keep an external user source outside the Project when possible. If a temporary
+  in-Project copy is necessary, place it under `tmp/scratch/`.
+
+
+Design durable Scene Beats for one Renku Studio screenplay Scene. A Beat is a
+narrative unit, not a camera Shot. Keep framing, lenses, camera movement, edit
+coverage, and production execution out of Beat content.
+
+Author as many Beats as the Scene's narrative developments require. There is no
+four-Beat cap, preferred multiple, grouping rule, or image-batch concern in Beat
+design. Beat Storyboard images are later pre-production story-alignment
+artifacts; Media Producer alone partitions requested saved Beats into image
+batches of up to four without changing this revision.
+
+## Workflow
+
+For storyboard generation from existing Beats, resolve the exact Scene, revision
+and requested Beat scope if unknown, then route directly to `media-producer`.
+Do not run the Beat-authoring workflow below unless the task also changes Beats.
+
+If the requested Scene has no saved Beats, a Storyboard request needs first
+Beat creation through the workflow below before Media Producer can prepare
+images. Load the Beat design, JSON contract, and CLI workflow references;
+persist the narrative-appropriate Beats and pass the returned revision and
+Beat ids unchanged. For whole-screenplay coverage, repeat this check for every
+requested Scene and reuse existing revisions. Retained history or an empty
+saved revision needs the owning Beat workflow's intent decision, not an
+automatic reset. Before dependent authoring for an image request, resolve an
+unauthored Storyboard Lookbook through Media Producer's prerequisite check;
+text-only Beat work does not require a Storyboard Lookbook.
+
+1. Resolve the current Project and exact Scene. For Studio focus, run
+   `renku studio current --json`. For `Scene 22` or `22A`, run:
+
+   ```bash
+   renku screenplay scene-number resolve --number <production-number> --json
+   ```
+
+   Use only the returned durable `sceneId` in JSON and `--scene` flags.
+
+2. Read current context and history:
+
+   ```bash
+   renku screenplay beats context --scene <scene-id> --json
+   renku screenplay beats list --scene <scene-id> --json
+   renku screenplay beats show --active --scene <scene-id> --json
+   ```
+
+3. Choose one intent:
+
+   - Brainstorm without persistence.
+   - `create` the first Scene Beats revision.
+   - `apply` focused insert/update/delete operations against an exact
+     `baseRevisionId`.
+   - `reset` the full Beat set when the user explicitly wants a new version.
+   - Restore retained work with `set-active`; never rewrite or delete history.
+
+4. Read `references/beat-design-guidelines.md`,
+   `references/scene-beats-json-contract.md`, and
+   `references/scene-beats-cli-workflow.md` as needed.
+
+5. Execute the chosen intent with Core validation, then use the returned or, when needed, freshly read
+   exact revision. If a command reports `CLI026`, the mutation already
+   succeeded; read durable state and refresh Studio separately instead of
+   rerunning the mutation.
+
+6. Read Storyboard status for the exact saved revision:
+
+   ```bash
+   renku screenplay beats storyboard status \
+     --scene <scene-id> \
+     --revision <scene-beats-revision-id> \
+     --json
+   ```
+
+7. If Beats lack selected Storyboard images and the user did not request
+   text-only work, hand off to `media-producer` with purpose
+   `scene.storyboard-sheet`, `scene:<scene-id>`, the exact
+   `sceneBeatsRevisionId`, and returned `missingBeatIds`. Hand off the exact
+   revision unchanged; do not group, pad, merge, or reorder Beats.
+
+## Number And Identity Ownership
+
+Author only creative `BeatInput` fields. Core creates Beat ids and numbers for
+`create`, `reset`, and insert operations. Updates and deletes target a durable
+`beatId`; updates preserve its number. Do not guess ids or numbers, derive them
+from array position, or reuse a retired number.
+
+Reset creates and activates a new revision with fresh Beat ids and `1..N`
+numbers. It retains the prior revision and records it as `baseRevisionId`.
+Restore means `set-active` on an exact retained revision. Because Storyboard
+Assets remain owned by `{ sceneId, beatId }`, reactivating a revision reconnects
+its retained Beat images; do not copy image paths into Scene Beats JSON.
+
+## References
+
+- `references/scene-beats-cli-workflow.md`
+- `references/scene-beats-json-contract.md`
+- `references/beat-design-guidelines.md`
+- `samples/scene-beats.json`
+- `samples/scene-beats-operations.json`
+
+## Non-Negotiables
+
+- Do not write directly to `.renku/project.sqlite`.
+- Do not mutate screenplay content while designing Beats.
+- Do not invent Scene, Screenplay Block, Cast Member, Location, Prop, revision,
+  or Beat ids.
+- Do not put `id` or `number` in a Beat input.
+- Use stable `screenplayBlockIds`, never array indexes.
+- Preserve creative contents as opaque authored values.
+- Create, reset, and apply validate before writing. Separate validation is for validation-only intent or a review pause.
+- Add no camera fields, generated-media paths, or production-logistics fields.
+- Do not cap or group Beats for the later four-panel generation optimization.
+- Discuss perceived pace and timing during review, but do not invent persisted
+  Beat timing fields.

@@ -1,0 +1,13 @@
+{
+  "operations": [
+    {
+      "operation": "reference.add",
+      "reference": {
+        "key": "urban-scene-presence",
+        "subject": { "type": "castMember", "id": "cast_urban" },
+        "target": { "type": "scene", "scene": { "id": "scene_scene_003" } },
+        "role": "presence"
+      }
+    }
+  ]
+}

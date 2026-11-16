@@ -1,0 +1,97 @@
+# Screenplay Analysis CLI Workflow
+
+Use the CLI as the only metadata boundary.
+
+## 1. Resolve The Project
+
+If the user named a project:
+
+Use the known project name with `--project <project-name>`; no `project open` is needed.
+
+If the project is already current, continue.
+
+If the requested focus is a production scene number, resolve it before reading
+the analysis context:
+
+```bash
+renku screenplay scene-number resolve --number <production-number> --project <project-name> --json
+```
+
+Use the returned `sceneId` for persisted evidence references. Do not add a
+duplicate production-number field to Screenplay Analysis JSON.
+
+## 2. Read Analysis Context
+
+```bash
+renku screenplay analyze context --project <project-name> --json
+```
+
+The context includes `analysisMethod`, direct Project story metadata, opening content, canonical
+ordered Scenes and stable Block ids, screenplay references for Cast Members,
+Locations, and Props, default criteria, and the active analysis summary.
+
+Branch before authoring:
+
+- `sourceActMode: flat`: derive three analysis-owned segments. Every FDX-backed
+  Screenplay takes this branch. Analyze only canonical context; never inspect
+  retained FDX XML or infer Acts from New Act, End of Act, Sequence, Outline,
+  Note, marker text, or editor lanes.
+- `sourceActMode: sourceThreeAct`: use each returned source Act's ordered
+  `sceneIds` as the matching analytical segment. Put proposed boundary changes
+  in critique suggestions; do not author alternate memberships. This branch is
+  only for canonical Renku-authored three-Act organization.
+- `supported: false`: stop before model work and report `reason`. Renku
+  currently supports only three-act Screenplay Analysis.
+
+Do not scrape the Studio UI for analysis data.
+
+## 3. Author JSON
+
+Write a complete hierarchy-independent document using
+`screenplay-analysis-json-contract.md`. Do not copy screenplay Section ids into
+the analysis.
+
+## 4. Optional Validation
+
+```bash
+renku screenplay analyze validate --file tmp/operations/screenplay-analysis.json --project <project-name> --json
+```
+
+Fix every structured error. Unknown fields are rejected.
+
+## 5. Write
+
+```bash
+renku screenplay analyze write --file tmp/operations/screenplay-analysis.json --project <project-name> --json
+```
+
+The write command creates a new history row and makes it active. Always run it
+for an ordinary request to analyze the current screenplay; do not treat an
+existing active analysis as completion.
+
+## 6. Confirm From The Write Report
+
+Use `analysis`, `activeAnalysisId`, and `changes` from the write report. Read
+the active analysis only when more persisted detail is needed or state changed:
+
+```bash
+renku screenplay analyze show --active --project <project-name> --json
+```
+
+Report the active analysis id, the short summary, and the highest-impact critique.
+
+## Useful Reads
+
+```bash
+renku screenplay analyze list --project <project-name> --json
+renku screenplay analyze show --analysis <analysis-id> --project <project-name> --json
+```
+
+## Rules
+
+- `validate` never writes.
+- `write` always creates a new analysis row.
+- `set-active` changes only the active pointer.
+- Suggestions are critique only and do not create screenplay rows.
+- No analysis step may call `renku screenplay create`, `apply`, or revision
+  restore.

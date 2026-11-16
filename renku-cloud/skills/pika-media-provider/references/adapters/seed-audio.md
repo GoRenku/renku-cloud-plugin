@@ -1,0 +1,18 @@
+# Seed Audio 1.0 on Pika
+
+Use the selected route's live input schema for fields and limits. Pika's
+[operation specification](https://dev.pika.art/llms/bytedance/seed-audio-1.0/text-to-audio)
+accepts ordered reference audio clips in `audio_urls` and identifies them in
+the prompt as `@Audio1`, `@Audio2`, and `@Audio3`. Keep each marker aligned with
+its exact native reference position. For an attached local clip, put the `$file`
+marker in `audio_urls` and set `promptMention` to its corresponding
+`@AudioN` only when the request actually uses that clip. Use at most three
+clips: Pika's live schema sets no limit, so Renku cannot refuse a fourth before
+the request reaches Pika. A preset `voice`
+belongs to the base model variant; the multilingual variant uses cloning
+references. Confirm the selected variant in the live schema before preparing
+the request.
+
+In the Codex dialogue direction panel, this route is described by the
+[Seed Audio `## Codex panel` block](../../../media-producer/references/model-guides/audio/seed-audio-1.0.md#codex-panel);
+keep the notation above when mapping its consumed draft.

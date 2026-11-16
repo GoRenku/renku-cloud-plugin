@@ -1,0 +1,450 @@
+---
+name: screenplay-drafter
+description: Create, import, and revise Renku Studio screenplays as the persisted screenplay source of truth. Use when a user wants to import a Final Draft .fdx file, develop a script, screenplay, short film, feature, story arc, dialogue, narration, scene settings, action lines, or author Renku screenplay create/apply JSON.
+---
+
+# Screenplay Drafter
+
+## Renku Cloud
+
+When the Renku tools (`renku_command`, `renku_upload`, `renku_download`,
+`renku_view`, `renku_guide`) are present, Renku runs in Renku
+Cloud. This section then applies and takes precedence over any instruction
+below to stop when `renku` is unavailable.
+
+- Run the `renku ...` commands a step needs as one `renku_command` batch:
+  `{"commands": [{"args": ["screenplay", "status", "--json"]}], "onFailure": "stop"}`.
+  There is no shell, so no pipes, redirects or `$(...)`. A command that needs
+  an id from an earlier answer goes in a second batch.
+- Your workbench is on your computer: the documents you write, saved answers
+  and notes. Send a document a command reads in that command's `files`, keyed
+  by the `tmp/` path the command names.
+- An answer over 100,000 characters, or any answer when `saveAnswers` is true,
+  comes back as a download link. Fetch it with `curl` and read it with jq,
+  sed or a script on your computer.
+- Files go up in one `renku_upload` call; use the path each upload reports.
+  Library files come down in one `renku_download` call. Read this skill's own
+  files from the installed plugin. The permission steps below do not apply to
+  Renku commands.
+
+For screenplays:
+
+- An FDX the person gives you is on your computer: upload it, then run
+  `screenplay import-fdx` with `--file` set to the uploaded path.
+- Read the screenplay as text with `screenplay show --text`, adding
+  `--scenes <a-b>`, `--character <NAME>` or `--outline` for part of it. For
+  durable ids before a revision, run `screenplay show --json` with
+  `saveAnswers` true and read the file with jq.
+- Download every supporting file's `projectRelativePath` in one
+  `renku_download` call and read them on your computer.
+- A Screenplay document too large for `files` (5 MB in all) goes up with
+  `renku_upload` into `tmp/operations`; pass the path the upload reports.
+- External export works differently: there is no Project folder on your
+  computer to export into. The person downloads the FDX from Studio and edits
+  it, then uploads it in Studio or gives it to you. For a file they give you,
+  upload it and run `screenplay fdx update --source <path>`. Either way the
+  person reviews the update in Studio.
+
+This skill requires the installed Renku runtime. If `renku` is unavailable, stop and direct the user to `https://gorenku.com`; do not substitute ad hoc files for the CLI-owned project state.
+
+## Efficient Command Use
+
+Screenplay commands support `--project <project-name>`; prefer it for a known project. Reuse selection after create or a verified current-project-only handoff instead of reopening. Apply existing operation documents for related changes; one apply validates the complete aggregate. Import reports establish outcome, but retain exact source-backed Screenplay reads and plan 0210 immediate pre-enrichment reads plus result verification. Refresh context after intervening edits or user review.
+
+Consult the relevant CLI reference/help once if syntax is unknown, then reuse verified syntax for this task. Do not discover syntax by attempting mutations. Do not invent `project list`. If a known permission denial blocks cache/output/config or local-network access, explain the requirement and use the authorized host permission flow; do not repeat the denied attempt, read secrets, disable cache persistence, or change permissions. `CLI026` means the mutation succeeded: report the notification warning without replaying the mutation.
+
+## Project Workspace
+
+Keep every agent-created working file inside the current Project's categorized
+`tmp/` tree. Never create operation JSON, Generation Specs, import manifests,
+QA images, downloads, crops, or scratch files at the Project root.
+
+- Use `tmp/operations/` for CLI authoring documents, including create, update,
+  design, analysis, Lookbook, Scene Beats, Shot Plan, and import JSON.
+- Use `tmp/operations/media-generation/` for Media Producer review and
+  provenance documents.
+- Use `tmp/media/` for temporary generated, downloaded, transformed, or cropped
+  media; use `tmp/qa/` for review evidence and `tmp/scratch/` for other temporary
+  inputs.
+- Create category folders lazily. Let Renku commands copy accepted content into
+  durable owner folders; never construct durable asset paths in the skill.
+- Keep an external user source outside the Project when possible. If a temporary
+  in-Project copy is necessary, place it under `tmp/scratch/`.
+
+
+Use this skill to help a user move from story idea or revision request to a playable screenplay authored as Renku Studio screenplay JSON, so Renku Studio can render and visualize the screenplay.
+
+Screenplay craft and Renku persistence go hand in hand. Think like a screenwriter, then encode the result in valid Renku screenplay data so the authored project stays current.
+
+## Start Here
+
+1. Decide what kind of work the user is asking for:
+
+   - New screenplay from a rough idea.
+   - New screenplay from a detailed brief.
+   - Deterministic import of an existing Final Draft `.fdx` screenplay.
+   - Import of supporting source files without changing screenplay content.
+   - Revision of an existing screenplay.
+   - Focused craft help, such as scene structure, dialogue, cast, locations, narration, or story arc.
+
+   For focused craft help, still keep Renku as the target artifact. Diagnose the story problem, decide the craft change, then express the accepted change as a complete Screenplay input or a focused `operations` batch. If the user is choosing between alternatives, describe the options briefly and make clear which Renku change each option would become.
+
+   Route supporting-file import to `screenplay-supporting-material-importer`.
+   It is available to every Renku Project and is independent of FDX ownership.
+   Do not treat a PDF, document, image, or other contextual source as a request
+   to adapt or mutate the screenplay unless the user separately asks for that.
+
+2. Gather or infer the story brief before writing JSON.
+
+   Minimum useful inputs:
+
+   - Scenario overview, more detailed than a logline.
+   - Target format and length, such as 5-minute short, short film, feature, pilot, or custom page/minute target.
+   - Intended audience and content boundaries.
+   - Tone, genre, and any style references.
+   - Main cast members, relationships, wants, needs, and pressure points.
+   - Time period, world rules, and relevant background context.
+   - Primary locations and why they matter dramatically.
+   - Main conflict, stakes, dramatic question, and consequences.
+   - Required moments, themes, research constraints, or production constraints.
+
+   Ask only for missing choices that materially change the story. If the user wants momentum or asks you to proceed, make clear assumptions and record them in direct Project information fields through `renku info set`.
+
+3. Gather supporting information when the premise depends on facts.
+
+   - Use the user's supplied material first.
+   - Before creating a Screenplay, list and read every imported source. For an
+     existing Renku-authored Screenplay, reread them when the user explicitly
+     asks for a source-driven revision after new material is imported:
+
+     ```bash
+     renku asset list --project <project-name> --owner project --type screenplay_supporting_material --limit 200 --json
+     ```
+
+     Follow `nextCursor` with repeated `--cursor <nextCursor>` calls until it
+     is `null`; combine every page before drafting or revising.
+
+     Resolve each file below the exact Project folder from its import report
+     or verified task context. If that folder is missing, establish and read
+     the correct authoring selection once; never resolve an explicitly targeted
+     Project against a different current Project folder. Use the harness reader
+     appropriate to the contents. Do not
+     filter by extension or MIME type. An FDX-backed Screenplay remains
+     source-authoritative and cannot be revised from supporting material.
+     Raw supporting-material paths and copied source content stop at screenplay
+     authoring. Do not place them in screenplay JSON or forward them to
+     Screenplay Analysis, Media Producer, Scene Beats, Shot Plans, Lookbooks,
+     or storyboards. Those workflows consume the resulting canonical
+     Screenplay and durable continuity descriptions.
+   - For historical, biographical, technical, legal, cultural, or place-specific stories, identify what must be true for the script to work.
+   - Keep sourced facts separate from dramatized inventions.
+   - Put sources or source notes in Project `researchSources` when available.
+   - Put invented bridges, unresolved facts, and creative guesses in Project
+     `assumptions`, `openQuestions`, and `nextSteps`.
+
+4. Shape the story before writing pages.
+
+   Use a three-act structure by default unless the user's format calls for something else. For very short scripts, keep the act model lightweight but still identify:
+
+   - Hook.
+   - Inciting incident or first turn.
+   - Midpoint, escalation, or major reversal.
+   - Climax.
+   - Resolution.
+
+   Length guidance:
+
+   - One screenplay page roughly equals one screen minute.
+   - Very short: 1-3 pages.
+   - 5-minute short: about 5 pages.
+   - 10-minute short: about 10 pages.
+   - Short film: roughly 5-30 pages.
+   - Feature: roughly 80-120 pages.
+
+5. Draft playable scenes.
+
+   - Give each scene a want, obstacle, reveal, reversal, or decision.
+   - Keep action visual, present tense, and production-readable.
+   - Use dialogue for behavior, pressure, conflict, and subtext.
+   - Avoid novelistic interiority unless it is expressed through action, dialogue, narration, or voice-over.
+   - Use narration, title cards, supers, shots, and transitions only when they help the script.
+
+6. Use screenplay conventions, even though the final artifact is JSON.
+
+   - Author the exact Scene `heading`, such as `INT. DINER - NIGHT`, `EXT. ROOFTOP - DAWN`, or `OVER BLACK.`
+   - Use action blocks for visible or audible screen action. Keep them lean, present tense, and free of unfilmable internal thoughts.
+   - Use Dialogue blocks with an authored `characterName`, ordered `parts`, and
+     `extensions` such as `V.O.` or `O.S.`. Bind the cue to a Cast Member with
+     a separate `speaker` reference.
+   - Use parentheticals sparingly for playable behavior or delivery that is not already clear from the line.
+   - Use `shot`, `super`, `titleCard`, `specialHeading`, and `transition` blocks when the script needs those formal elements.
+   - Avoid camera-direction clutter unless a shot instruction is essential to the story, rhythm, or later generation workflow.
+
+7. Express related screenplay changes in one supported operation document; the mutation validates the complete aggregate.
+
+   Renku owns durable IDs. Agents author temporary keys for new records, run the Renku commands, then use Renku's generated IDs for later edits.
+
+## Project Preflight
+
+Screenplay commands support explicit `--project <project-name>`. Resolve the
+Project once before writing, creating, or applying screenplay JSON.
+
+The user must either provide an existing Renku project name or let the skill
+create a new project. Treat a user-supplied project ID as the Renku CLI
+`<project-name>`.
+
+1. For an existing project, pass the known name with `--project <project-name>`.
+   Open authoring selection only for a downstream current-authoring-only command
+   when that Project is not already verified as current.
+
+2. For a new project, derive or ask for a kebab-case project name and title, then create it:
+
+```bash
+renku create <project-name> --title <title> --json
+```
+
+`renku create` opens the created project as the current authoring project. Do
+not run `renku project open` again after a successful create.
+
+3. Before any screenplay mutation, inspect screenplay state:
+
+```bash
+renku screenplay status --project <project-name> --json
+```
+
+If the user identifies an existing scene by production number, such as
+`Scene 22` or `22A`, resolve it before reading or authoring the mutation:
+
+```bash
+renku screenplay scene-number resolve --number <production-number> --project <project-name> --json
+```
+
+Use the returned durable `sceneId` in Screenplay operation JSON and `--scene`
+flags. Renku-authored Scenes receive Core-owned production numbers, while FDX
+imports preserve exact optional authored numbers. A production number is not
+identity or canonical order. Do not author it in agent Scene input or infer an
+id from a Section, title, or array position.
+
+Use `sourceOwnership` and the status counts to choose the command path:
+
+- all counts are zero and the user supplied an `.fdx`: import it with
+  `renku screenplay import-fdx --file <absolute-fdx-path> --json`.
+- all counts are zero and the screenplay will be authored in Renku: create it
+  with `renku screenplay create`.
+- `sourceOwnership` is `fdx`: never use generic Screenplay mutations. Use
+  `import-fdx` only when the user supplies the next source file for a refresh.
+- `sourceOwnership` is `renku` and any count is nonzero: revise the existing
+  Screenplay with one focused `operations` batch and `renku screenplay apply`.
+
+Use `renku screenplay revision list`, `renku screenplay revision show`, and
+`renku screenplay revision restore` when the user asks to inspect or restore
+screenplay history.
+
+## Import A Final Draft Screenplay
+
+Use this path for a readable absolute `.fdx` path and either an empty
+Screenplay or an existing FDX-backed Screenplay:
+
+```bash
+renku screenplay import-fdx --file /absolute/path/to/script.fdx --project <project-name> --json
+```
+
+Handle the typed result:
+
+- `imported`: read back the new exact source-backed Screenplay.
+- `refreshed`: read back the immediately imported exact source replacement.
+- `unchanged`: report that the Screenplay did not change. Still complete missing
+  Project Information as described below; do not repeat fact enrichment merely
+  because the same FDX was supplied again.
+
+A user-explicit CLI import accepts the valid source immediately and may replace
+current Scene identities. It has no approval token or merge mode. The detected
+Studio workflow instead requires review; see External Export And Reviewed Update.
+
+After a successful explicit import, including `unchanged`, enrich Project
+Information before any fact handoff:
+
+1. Read `renku screenplay show --json` and
+   `renku info show --project <project-name> --json`. Read the canonical script
+   across its full story before drafting missing text. For a long script, work
+   through bounded portions and consolidate the beginning, central conflict,
+   major turns, and ending. If command output is too large, save the JSON under
+   the Project's `tmp/scratch/` and inspect it in bounded portions rather than
+   relying on truncated terminal output. Do not summarize from opening scenes,
+   a filename, a title page, or knowledge of a familiar film. If you cannot
+   inspect enough of the script, leave the fields unchanged and explain why.
+2. Consider `logline`, `synopsis`, and `premise` separately. Draft a concise
+   one-sentence story hook, a coherent plot account, and the central dramatic
+   proposition, respectively. Use the supplied story brief to resolve
+   ambiguity, but make the imported script authoritative for its story. Do not
+   copy the same text into all three fields.
+3. Fill absent, null, empty, or whitespace-only fields. You may replace
+   unmistakably temporary text such as `TBD`, `TODO`, `placeholder`, or an
+   explicitly unfinished note. Make this a creative judgment, not a keyword
+   or length test: preserve a short but meaningful sentence. If quality is
+   ambiguous, or substantive text differs from the script, preserve it and
+   tell the user what may need revision.
+   Preserve a meaningful Project title. Change a clearly temporary title only
+   when the supplied FDX has an explicit, unambiguous title; never infer it
+   from the filename or Project name. Do not infer or change aspect ratio or
+   Project language from the screenplay.
+4. Re-read `renku info show --project <project-name> --json` immediately before
+   writing. Omit any field that has become substantive since the first read.
+   Make one `renku info set --project <project-name> ... --json` call containing
+   only the selected fields; skip it when none qualify. Read back with
+   `renku info show --project <project-name> --json` and report what was filled,
+   preserved, or left unresolved.
+
+Do not start Project Information enrichment if FDX import fails. If import
+succeeds but `info set` reports an error, read Project Information back before
+retrying: the write may have persisted even if Studio notification failed.
+Report the Screenplay outcome and the verified metadata outcome separately.
+Retry only fields still missing or clearly temporary. An explicit later import
+of the same FDX may return `unchanged` and still finish this pass. The
+deterministic importer itself never writes creative Project Information. A
+bare CLI import or a detected Studio export does not invoke this agent workflow.
+
+Treat the returned character cues, Scene Headings, and tagged subjects as
+evidence, not Project identities. After `imported` or `refreshed`:
+
+1. Read the canonical Screenplay plus existing Cast Members, Locations, and
+   Props.
+2. Resolve cue aliases from the complete script and prior user decisions;
+   ask when a cue alias, composite setting, or mentioned object remains
+   ambiguous. One person is one Cast Member at every age: `YOUNG EDWARD` and
+   `EDWARD` become one person with age-specific Looks when the script
+   establishes their identity. Pass that grouping to `casting-director`;
+   never suggest one Cast Member per imported cue. Preserve source cues.
+3. Return the exact evidence and unresolved identity questions to
+   `movie-director`. That coordinator reads
+   `projectSettings.screenplayImport` and decides which enabled follow-up
+   stages to dispatch.
+4. The coordinator may use accepted evidence to create or revise Project facts,
+   but do not bind those facts into an FDX-backed Screenplay. The Core read-only
+   gate covers reference operations as well as prose and organization.
+
+After `unchanged`, do not repeat this fact handoff unless the user separately
+asks for another review of the existing Screenplay.
+
+Do not ask the importer to create or match facts. Do not report formatting or
+ScriptNotes as omissions; they remain only in the retained source. Refresh
+mirrors the accepted FDX exactly; it is not a merge and cannot retain material
+removed from the source. Every FDX-backed Screenplay is a flat source-ordered
+Scene list. Final Draft New Act, End of Act, Sequence, Summary, Outline, Note,
+and ScriptNote elements never become Renku Sections, and prose that looks like
+an Act marker must not be interpreted as hierarchy.
+Do not independently dispatch casting, production design, media, analysis,
+Scene Beats, or storyboard work from this skill; `movie-director` owns that
+cross-department sequence.
+
+## Create A First Screenplay
+
+Use this path only after `renku screenplay status --json` reports zero opening
+elements, Sections, Scenes, Blocks, and references.
+
+1. Store story and development metadata on Project through `renku info set`.
+2. Build a complete Screenplay JSON object with `opening`, `scenes`, optional
+   `sections`, `structure`, and `references`. The command context supplies the
+   create intent; do not add a `kind` envelope or caller-authored Scene
+   production numbers. Core numbers new agent-authored Scenes.
+3. Ensure Cast Members, Locations, and Props already exist through their owning
+   specialist/CLI commands. Author plain screenplay text, then bind those
+   Project subjects through separate Screenplay references. Do not put
+   `@handle` tokens into screenplay prose.
+
+   For a short piece, draft the full requested scope when feasible. For a feature, pilot, or broad long-form idea, do not attempt a full draft unless the user explicitly asks; create the developed arc plus the opening pages, requested scene sequence, or next useful writing unit.
+
+4. Create through Core validation:
+
+```bash
+renku screenplay create --file tmp/operations/screenplay-create.json --project <project-name> --json
+```
+
+## Revise An Existing Renku-Authored Screenplay
+
+Use this path whenever Screenplay status contains any authored content.
+
+1. Read the current state first:
+
+```bash
+renku screenplay show --project <project-name> --json
+```
+
+Confirm `renku screenplay status --json` reports `sourceOwnership: renku`.
+Refuse organization or prose mutations for `sourceOwnership: fdx`; the user
+must revise the source in their screenwriting tool and refresh the FDX.
+
+2. Understand the requested story change before choosing operations:
+
+   - What story problem is being solved?
+   - Which Project subjects, Sections, Scenes, Blocks, dialogue parts, or references are affected?
+   - Does the revision change continuity, structure, tone, audience promise, or running time?
+   - Do Project `synopsis`, `centralConflict`, `dramaticQuestion`, `themes`, or `assumptions` need to change too?
+
+3. Draft one focused `{ "operations": [...] }` JSON document. Organization
+   work may add/revise Acts and Sequences and move many Scenes in this single
+   atomic batch; do not issue one apply command per Scene.
+4. Apply through Core validation:
+
+```bash
+renku screenplay apply --file tmp/operations/screenplay-operations.json --project <project-name> --json
+```
+
+There is no separate Screenplay operations validate or dry-run command. One
+`apply` validates the complete final aggregate and writes nothing when any
+operation is invalid.
+
+5. Preserve the user's story intent. Ask only for missing choices that materially change the story, scope, or command shape.
+
+## Reference Files
+
+- Read only the reference files needed for the task.
+- Read `references/screenplay-writing-guidelines.md` before creating a new screenplay, giving focused craft help, or making a substantial story, scene, cast, location, dialogue, tone, or structure revision.
+- Read `references/screenplay-json-contract.md` before writing JSON. It defines create documents, operation documents, references, placement, and canonical output.
+- Read `references/screenplay-json-workflow.md` when you need project preflight, command order, validation, dry-run, or output handling.
+- Use `references/screenplay-json-contract.md` for complete create and operation shapes. Replace placeholder IDs with IDs from `generatedIdentities` or `renku screenplay show --json`.
+
+## Non-Negotiables
+
+- Do not create, update, delete, or move Cast Members, Locations, or Props through Screenplay JSON. Use the owning specialist/CLI commands first.
+- Use `key`, not `localKey`, for new records in create/add input.
+- Do not provide `id` for a new Opening Element, Scene, nested Block/dialogue value, Section, structure entry, or reference. Renku generates those ids.
+- Do not provide `productionNumber` for a new agent-authored Scene. Renku
+  allocates and reserves it.
+- Use durable `id` values for existing records, update targets, delete targets, move targets, parent targets, and placement targets.
+- Run project preflight and `renku screenplay status --json` before any screenplay create/apply.
+- Run project preflight and inspect `sourceOwnership` before FDX import or any
+  Screenplay mutation.
+- Refresh only an existing FDX-backed Screenplay; never convert a Renku-authored
+  Screenplay by supplying an FDX.
+- Treat `imported`, `refreshed`, and `unchanged` as the only FDX outcomes. Never
+  pass an approval token to the manual CLI command. Detected Studio updates require review.
+- Do not run `renku screenplay create` when any Screenplay content exists; use `renku screenplay apply`.
+- Do not replace an existing screenplay with a fresh full create document. Read the current screenplay and apply focused operations.
+- Reference objects contain exactly one of `id` or `key`.
+- Treat Scenes as canonical. Acts and Sequences are optional non-owning Sections; a flat ordered Scene list is valid.
+- Author plain text and use separate references whose subjects are durable Cast Member, Location, or Prop ids and whose targets use Scene/Block/dialogue ids or request-local keys.
+- Expect canonical reads to contain durable IDs only. Mutation reports return `generatedIdentities`.
+- Existing nested IDs preserve identity during `scene.update`; keys create new nested values, and omitted nested values are deleted after final-state dependency validation.
+
+## Quality Bar
+
+- Make the story playable: clear wants, obstacles, stakes, turns, and consequences.
+- Keep action visual, present tense, and production-readable.
+- Use dialogue for behavior, pressure, and subtext, not exposition that can be shown.
+- Keep Cast Member, Location, and Prop handles stable in their owning Project fact commands; do not embed them in screenplay prose.
+- Record important assumptions in direct Project fields when the user asks you to proceed with incomplete information.
+
+## External Export And Reviewed Update
+
+For a detected Studio update, have the user export to the exact path displayed
+by **External screenplay**: `<projectFolder>/screenplay/edit/script.fdx`.
+Never write or overwrite a retained `screenplay_source` Asset. Studio detects
+stable changed bytes and requires review plus **Update screenplay**; **Later**
+leaves the accepted screenplay unchanged. Do not automatically run CLI import
+to bypass that pending review. A user-explicit manual `import-fdx` request still
+imports immediately and has no approval token.
+
+Even a one-character dialogue edit can replace the whole Scene graph. Existing
+Beats, Shot Plans, Shots, and audio remain in history attached to old Scene IDs;
+do not promise continuity, infer replacements, or repair creative artifacts.

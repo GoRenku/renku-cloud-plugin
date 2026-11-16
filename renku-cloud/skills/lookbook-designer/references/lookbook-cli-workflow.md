@@ -1,0 +1,111 @@
+# Lookbook CLI Workflow
+
+Use JSON output for every command.
+
+1. Open or confirm the project:
+
+Use `--project <project-name>` without changing current authoring selection.
+
+2. Read both project roles:
+
+```bash
+renku lookbook show --kind production --project <project-name> --json
+renku lookbook show --kind storyboard --project <project-name> --json
+```
+
+3. Reuse the authored role just read; refresh it only after relevant changes:
+
+```bash
+renku lookbook show --kind <production|storyboard> --project <project-name> --json
+```
+
+4. For validation-only intent or a real review pause:
+
+```bash
+renku lookbook validate --file tmp/operations/lookbook.json --project <project-name> --json
+```
+
+5. Apply. The document carries the Lookbook role and authored name. Apply creates an unauthored role or updates the current role in place:
+
+```bash
+renku lookbook apply --file tmp/operations/lookbook.json --project <project-name> --json
+```
+
+6. Use the returned Lookbook and changes. Read the role again only if the report is insufficient or state changed:
+
+```bash
+renku lookbook show --kind <production|storyboard> --project <project-name> --json
+```
+
+7. Import example images after files exist in the project. Selection may be
+   atomic with import; placement remains separate. `media import` returns
+   `assetFile.id` for common selection and `ownerRecord.id` for Lookbook placement.
+   Tag each image with the clearest style aspect it demonstrates so Studio can
+   show it next to the right widget. Production aspects are `thesis`, `palette`, `toneMood`,
+   `composition`, `lighting`, `texture`, `camera`. Storyboard aspects are
+   `styleBrief`, `lineAndFinish`, `valueAndAccent`, `guardrails`. Default each
+   Storyboard example to the single aspect it demonstrates most clearly. Place
+   the canonical overall-style image in `styleBrief` only unless the user asks
+   to repeat it. Multi-section placement is intentional reuse, not a default:
+   use it only when the repetition adds useful evidence and no dedicated image
+   already covers the secondary section. When a dedicated example is later
+   accepted, use `set-placement` to remove the broader image from that section.
+   Leave a section without images rather than repeat a generic image as filler;
+   a Lookbook does not need a separate generated image for every section.
+   Section placement does not authorize a different visual style. When a
+   Production Lookbook image clearly demonstrates one specific pattern or
+   observation, anchor it to that point with `--anchor <point-id>` and include
+   the point-owning section in `--sections` so it renders beside that point.
+   Additional `--sections` values remain broad section placements. Use
+   `--sections thesis` for a Production thesis hero image; when the same image
+   is also exact point evidence, use a mixed
+   placement such as `--sections thesis,texture --anchor
+   texture-cannon-material-states`. Set the `styleBrief` image (the overall
+   look) as the Storyboard card image so it becomes the detail-page hero.
+
+For a Storyboard Lookbook image series, establish and accept the `styleBrief`
+image first. When generating later examples that must match it, use an accepted
+image from that exact Lookbook as a visible style reference through
+`media-producer`; prose alone is not a continuity mechanism. Preserve its
+medium, line quality, finish, simplification, and tonal restraint while changing
+only the subject or section property being demonstrated. If no suitable visual
+anchor can be attached, stop or label the result as exploration rather than
+claiming it belongs to the matching set.
+
+```bash
+renku media import --purpose lookbook.image --target lookbook:<production-lookbook-id> --source <project-relative-path> --select --project <project-name> --json
+# Read ownerRecord.id from the JSON report, then choose the intended placement:
+renku lookbook image set-placement --image <ownerRecord.id> --sections thesis --project <project-name> --json
+renku lookbook image set-placement --image <ownerRecord.id> --sections composition --anchor composition-clinical-symmetry --project <project-name> --json
+renku lookbook image set-placement --image <ownerRecord.id> --sections thesis,texture --anchor texture-cannon-material-states --project <project-name> --json
+
+renku media import --purpose lookbook.image --target lookbook:<storyboard-lookbook-id> --source <project-relative-path> --select --project <project-name> --json
+# Read ownerRecord.id from this import report before placement:
+renku lookbook image set-placement --image <ownerRecord.id> --sections styleBrief --project <project-name> --json
+```
+
+Keep `--select` only when the imported image should become the Lookbook's
+canonical card image. For an existing candidate, use its common Asset id:
+
+```bash
+renku asset select --project <project-name> --target lookbook:<lookbook-id> --asset-file <asset-file-id> --json
+renku asset clear-selection --project <project-name> --target lookbook:<lookbook-id> --json
+```
+
+Do not use `ownerRecord.id` for common selection, and do not add a
+Lookbook-specific selection command.
+
+Use `--image` for Lookbook image IDs. Use `--file` only for JSON input files. Use `--source` for project-relative media source files.
+
+For an existing Lookbook image, use `renku lookbook image set-placement` to change section tags or point anchors. This command replaces the image placement set, so include every section and optional point anchor the image should keep. Do not use `renku lookbook image discard` plus `renku media import` as a retagging workflow. If `set-placement` is unavailable, stop and report the missing CLI support instead of creating duplicate media.
+
+Production `thesis` is a single-image slot: placing a new image with `--sections thesis` replaces the previous Thesis placement without discarding that previous image or removing its other placements. Other Production section and point placements append until the slot has 10 images. When a multi-image slot is full, move or discard an existing Lookbook image before adding another one.
+
+Source Inspiration relationships:
+
+```bash
+renku lookbook inspiration list --lookbook <lookbook-id> --project <project-name> --json
+renku lookbook inspiration set --lookbook <lookbook-id> --file tmp/operations/source-inspirations.json --project <project-name> --json
+```
+
+Successful mutation reports include `resourceKeys`. Treat those as Studio refresh keys, not as creative content.

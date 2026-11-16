@@ -1,0 +1,237 @@
+---
+name: movie-director
+description: Coordinate Renku Studio movie-making workflows across screenplay, analysis, visual language, casting, locations, scene Beat design, Shot planning, media generation, and production readiness. Use when the user wants a top-level filmmaking sidekick, asks what to do next, wants to make or revise a movie across multiple departments, needs help choosing which Renku Studio skill to use, asks to stop the local Studio server, or asks for director-like guidance that dispatches to specialist skills such as screenplay-drafter, screenplay-analyst, inspiration-analyzer, lookbook-designer, casting-director, production-designer, scene-beat-designer, shot-planner, and media-producer.
+---
+
+# Movie Director
+
+## Renku Cloud
+
+When the Renku tools (`renku_command`, `renku_upload`, `renku_download`,
+`renku_view`, `renku_guide`) are present, Renku runs in Renku
+Cloud. This section then applies and takes precedence over any instruction
+below to stop when `renku` is unavailable.
+
+- Run the `renku ...` commands a step needs as one `renku_command` batch:
+  `{"commands": [{"args": ["director", "context", "--json"]}], "onFailure": "stop"}`.
+  There is no shell, so no pipes, redirects or `$(...)`, and a selection
+  argument needs no quoting. A command that needs an id from an earlier
+  answer goes in a second batch.
+- Your workbench is on your computer: the documents you write, saved answers
+  and notes. An answer over 100,000 characters, or any answer when
+  `saveAnswers` is true, comes back as a download link to fetch with `curl`.
+- Files go up in one `renku_upload` call; use the path each upload reports.
+  Read the skills' own files from the installed plugin.
+
+For coordination:
+
+- Studio runs in the cloud. There is no local Studio server to stop, and the
+  Codex sandbox and Studio notification steps below do not apply.
+  `studio current` gives Studio's address as `studio.url`; when a Studio
+  Preview answers `waiting`, ask the person to open Studio there.
+- Panels open only in the Codex desktop app; Claude Code and the Codex CLI use
+  each specialist's chat steps.
+- A file the person gives you (an FDX, supporting material, a voice file, an
+  image) is on your computer: upload it and hand the specialist the uploaded
+  path, never a path on your computer.
+- Final Draft round trip: the person downloads the FDX from Studio and edits
+  it, then uploads it in Studio or gives it to you. For a file they give you,
+  upload it and run `screenplay fdx update --source <path>`. Either way the
+  person reviews the update in Studio.
+- Providers run through the person's AI app. Hand `media-producer` the
+  Project's concurrency setting with generation work; it keeps that limit
+  itself and imports outputs with `--job` and `--receipt`. Codex built-in
+  images exist only in Codex.
+- Previs routes as below: Blender runs on your computer, and a staging
+  recording opens in the person's own browser.
+- Pika, Comfy Router and World Labs are not available in Renku Cloud, so
+  there is no Location World generation; existing Worlds still show in Studio.
+- For work across many Scenes, put every Scene's commands in one batch.
+
+Route Shot List coverage to `shot-planner`. Route new Previs to `previs-staging` (3D staging in Studio) unless the user asks for Blender by name; route Blender Previs creation and revisions of a plan with Blender revisions to `blender-shot-planner`, and revisions of a staged plan to `previs-staging`. Route AI generation from any plan type to `media-producer`, preserving the exact plan identity.
+
+This skill requires the installed Renku runtime. If `renku` is unavailable, stop and direct the user to `https://gorenku.com`; do not substitute ad hoc files for the CLI-owned project state.
+
+## Efficient Command Use
+
+Resolve project identity once per task and pass it with exact selected resource ids to specialists. Do not repeat project current or director discovery just because a specialist is invoked. Director context uses the current authoring project: establish it once when needed. Studio selection remains a separate required read when the user refers to the open surface. Confirm completion from sufficient specialist mutation reports; read again for missing state or intervening edits.
+
+Consult the relevant CLI reference/help once if syntax is unknown, then reuse verified syntax for this task. Do not discover syntax by attempting mutations. Do not invent `project list`. If a known permission denial blocks cache/output/config or local-network access, explain the requirement and use the authorized host permission flow; do not repeat the denied attempt, read secrets, disable cache persistence, or change permissions. `CLI026` means the mutation succeeded: report the notification warning without replaying the mutation.
+
+## Project Workspace
+
+Keep temporary agent working files inside the current Project's categorized
+`tmp/` tree. Retained Previs authoring source belongs in the canonical Shot Plan
+`previs/source/` directory; Core registers completed source revisions and renders.
+Never create operation JSON, Generation Specs, import manifests,
+QA images, downloads, crops, or scratch files at the Project root.
+
+- Use `tmp/operations/` for CLI authoring documents, including create, update,
+  design, analysis, Lookbook, Scene Beats, Shot Plan, and import JSON.
+- Use `tmp/operations/media-generation/` for Media Producer review and
+  provenance documents.
+- Use `tmp/media/` for temporary generated, downloaded, transformed, or cropped
+  media; use `tmp/qa/` for review evidence and `tmp/scratch/` for other temporary
+  inputs.
+- Create category folders lazily. Let Renku commands copy accepted content into
+  durable owner folders; never construct durable asset paths in the skill.
+- Keep an external user source outside the Project when possible. If a temporary
+  in-Project copy is necessary, place it under `tmp/scratch/`.
+
+
+Use this skill as the top-level Renku Studio coordinator for making a movie. It routes work to specialist skills, keeps prerequisites visible, and helps the user advance without pretending unsupported departments are complete.
+
+This skill should coordinate. It should not replace specialist skills or write their durable artifacts directly.
+
+## Stop Studio
+
+When the user asks to stop the local Studio server, run `renku studio stop`.
+This command requests a graceful shutdown and waits for the server to stop;
+`renku studio server status` can confirm its state afterward. A stop request
+does not require an open Project or Studio selection, so skip the project
+context steps below. The command uses local HTTP; request loopback network
+permission if the sandbox blocks it. Do not stop Studio as part of an unrelated
+filmmaking workflow.
+
+## Start Here
+
+1. Reuse the verified current authoring project; read it when missing or changed:
+
+```bash
+renku project current --json
+```
+
+2. For broad, cross-department, "current", "selected", "continue", or "what next" requests, read director readiness first:
+
+```bash
+renku director context --json
+```
+
+If a deterministic Studio selection is already available, use:
+
+```bash
+renku director context --selection '<studio-selection-json>' --json
+```
+
+3. Classify the user's request by department and current readiness.
+4. Load only the reference file needed for the next decision.
+5. Dispatch durable artifact work to the owning specialist skill.
+6. Verify sufficient specialist mutation reports; read back missing or uncertain durable state.
+7. Suggest the next concrete department step.
+
+When the user asks about "this", "current", "selected", "open", "the thing on
+screen", or a similar Studio-focused object, treat Studio current context as a
+required input before specialist dispatch:
+
+```bash
+renku studio current --json
+```
+
+Continue only when Studio current returns the object kind and durable id needed
+for the next command. Do not infer a scene, Beat, Cast Member, Location,
+Lookbook, or dialogue from nearby project data.
+
+When the user addresses a scene as `Scene 22`, `22A`, or another production
+number, resolve it before specialist dispatch:
+
+```bash
+renku screenplay scene-number resolve --number <production-number> --project <project-name> --json
+```
+
+Pass the returned durable `sceneId` to the specialist. The production number may
+remain in human-facing handoff prose, but must not become duplicate persisted
+artifact metadata.
+
+
+## Codex Sandbox And Studio Notifications
+
+Renku CLI mutations notify the running Studio app through local HTTP at the Studio server URL, normally `http://localhost:5173`. In Codex, localhost HTTP is still network access. When Studio is running and a workflow will mutate project state, import media, apply Scene Beats revision operations, set active rows, or run generation/import commands that should refresh Studio, request sandbox/network permission before the first mutating command.
+
+Renku keeps Codex permissions in the Project Library's `.codex/config.toml`, which Codex applies only when it is opened in that trusted folder. If Renku commands need approval or fail with `ENGINE_METADATA_CACHE_UNWRITABLE`, run `renku codex permissions status --json` and relay its advice; only the user runs `renku codex permissions set` or `remove`.
+
+If a command reports `CLI026`, the mutation already succeeded but Studio was not notified. Do not blindly rerun non-idempotent mutations such as Scene Beats apply/create/reset or media import. Instead, report the warning, refresh/read back state, and use a separate Studio notification/recovery step if one is available with local network permission.
+
+## Reference Files
+
+- Read `references/department-map.md` when classifying user intent or choosing a specialist.
+- Read `references/workflow-playbooks.md` for multi-step requests such as idea-to-movie, selected-scene generation, cast refinement, or location work.
+- Read `references/cli-coverage-and-gaps.md` when deciding whether a request is fully supported today or needs an honest gap explanation.
+- Read `references/specialist-handoff-checklists.md` before handing work to a specialist skill or reading back completion state.
+
+## Routing Loop
+
+Use this loop for every request:
+
+1. **Orient**: identify the open project, current Studio selection, and the minimum state needed for the request.
+2. **Diagnose**: decide whether the next step is screenplay, analysis, visual language, casting, production design, Beat design, media generation, or production readiness.
+3. **Dispatch**: use the specialist skill that owns the artifact. Do not directly write screenplay, analysis, Lookbook, Scene Beats, or media generation JSON when the specialist skill owns that workflow.
+4. **Verify**: consume sufficient mutation reports; read back missing or uncertain state with the CLI.
+5. **Advance**: name the next supported step and any unresolved prerequisite.
+
+## Specialist Ownership
+
+For new Beat Storyboards, read the Scene Beats to Storyboard playbook in
+`references/workflow-playbooks.md` before dispatch. If the Storyboard Lookbook
+is unauthored, ask whether the user wants to create it first or have
+`lookbook-designer` propose it, then wait for their choice and confirmation of
+the proposed direction. Do not assume a style from a broad Storyboard request
+or a generic `continue`. Check saved Beats for every requested Scene; dispatch
+missing Beat authoring to `scene-beat-designer` before Media Producer. Reuse
+existing confirmed direction and saved revisions.
+
+- Use `screenplay-drafter` for deterministic FDX import, screenplay creation,
+  and screenplay revisions.
+- Use `screenplay-supporting-material-importer` to retain any supporting source
+  file as opaque Project context. Import does not require FDX and does not
+  trigger screenplay, fact, analysis, or media mutations.
+- Use `screenplay-analyst` for critique, three-act analysis, structure notes,
+  and revision guidance. The Studio destination is **Analysis > Screenplay
+  Analysis**.
+- Use `casting-director` for Cast Member facts, Cast Design, Looks, casting rounds, wardrobe plans, character sheets per costume, voice casting notes, and cast media readiness.
+  For cast creation from a screenplay, pass character cues grouped by story
+  person and existing Cast Member ids. Different ages are Looks of one Cast
+  Member; do not dispatch one new Cast Member per cue. Ask about unresolved
+  identity before creating the affected cast.
+- Use `production-designer` for Location and Prop facts, Location Design, Prop
+  Design, set dressing, atmosphere, and production-design media readiness.
+- Use `inspiration-analyzer` for Visual Language Inspiration folder analysis.
+- Use `lookbook-designer` for durable Production Lookbook and Storyboard Lookbook creation, revision, and Inspiration source linkage.
+- Use `scene-beat-designer` for narrative-appropriate Scene Beats and Beat
+  iteration. Use `media-producer` `scene.storyboard-sheet` for new or materially
+  recomposed pre-production story visualization from an exact saved revision.
+  When the user wants one exact existing Beat image preserved except for named
+  changes, pass that source and intended Storyboard destination to
+  `media-producer` and let its image-operation routing select `image.edit`.
+- Use `shot-planner` for director/cinematographer production planning: Scene
+  Shot Plans, camera coverage, individual Shot iteration, order, Beat coverage,
+  and selected Shot Image coordination.
+- Use `media-producer` for deterministic generation briefings, provider-native
+  review/execution, Codex external generation, inspection, slicing, and
+  supported focused attachments. For image work, Media Producer owns the
+  create-versus-edit decision; do not preselect a domain creation purpose merely
+  because that domain will receive the accepted output. Route one-Turn or one
+  consecutive Turn-range Dialogue Audio Take to
+  `shot-plan.dialogue-audio`, and route edits or continuations of an exact
+  registered video Asset to `video.edit`.
+- Use `location-world-producer` for same-space reconstruction image coordination,
+  explicitly approved World Labs generation, selected 3D World readback, and
+  rollback through common Asset selection.
+
+Not first-class today:
+
+- Set-dressing media, sound, music, editorial, and final assembly skills.
+
+## Non-Negotiables
+
+- Do not write directly to `.renku/project.sqlite`.
+- Do not invent project, scene, Beat, Cast Member, Location, Prop, asset, Scene Beats revision, Lookbook, or generation ids or numbers.
+- Follow the Project's generation type settings (Choose Provider and Model
+  Each Time, Ask Before Generating) for every route, Codex built-in included;
+  do not invent an estimate artifact, approval token, or separate skill-owned
+  gate. Have specialists inspect and automatically attach generated
+  assets of every kind without asking for attachment acceptance, unless the
+  user explicitly requested review-only or leave-unattached work.
+- Preserve explicit user choices for provider/model, authored values, exact
+  references, Beat ids, costs, and approvals.
+- Do not use obsolete command aliases or compatibility paths.
+- Do not hide missing prerequisites with guesses or fallbacks.

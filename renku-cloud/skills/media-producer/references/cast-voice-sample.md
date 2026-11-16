@@ -1,0 +1,95 @@
+# Cast Voice Sample
+
+Use `cast.voice-sample` to generate playable sample audio for a Cast Member.
+
+## Purpose-specific configuration
+
+Use the shared
+[generation review routing](generation-review-routing.md) from the
+main Media Producer flow. The briefing's `workflowPolicy` supplies the saved
+Audio provider; current user direction takes precedence. Read the complete
+briefing before configuration, including voice facts and media inventory.
+
+For Seed Audio sample creation, show provider, model, output format, sample
+rate, speed, volume, pitch, and multilingual when the live Fal schema exposes
+them. Do not show a reference-voice picker because the first Seed sample is
+created from text description only. ElevenLabs sample retrieval runs only in
+local Renku, with the person's saved ElevenLabs key: it downloads the existing
+preview audio of one exact voice. For it, show the selected Cast Voice identity
+and the retrieval operation rather than inventing speech-generation controls.
+Renku Cloud cannot fetch a sample; see [In Renku Cloud](#in-renku-cloud).
+
+```bash
+renku generation context --purpose cast.voice-sample --target cast:<cast-member-id>
+```
+
+Author the request, then use the selected review path. Panel review uses
+standalone Validate and Submit/consume; Studio Preview uses Prepare. Execute
+only after that path completes, with its exact final request hash.
+
+Use the returned Cast/design/voice/Project-language facts as evidence. Combine
+the user's direct voice direction with the Cast Member's voice-casting notes.
+Choose a supported direct-audio model and input mode conversationally, then
+read the selected provider operation for its current native request fields and
+constraints. Do not expect model alternatives or provider controls in Core
+context and do not copy them into a second Skill-owned schema.
+
+## Create a Seed Audio reference sample
+
+Read `model-guides/audio/seed-audio-1.0.md`. Create the first reference voice
+from text description only; do not condition it on another voice sample.
+Author approximately 70–85 natural words that the character actually speaks,
+targeting about 30 seconds at natural conversational pace. Count the spoken
+script separately before Preview: voice direction, speaker description, scene
+setting, and prompt instructions do not count toward this word budget. If the
+spoken script is short, expand it with meaningful in-character speech; never
+make up the missing duration with stretched pauses, sparse delivery, repeated
+ellipses, or an artificially slow pace. Require:
+
+- one speaker only;
+- one consistent emotion and timbre;
+- no music or second voice;
+- minimal background sound and a steady microphone perspective; and
+- natural pacing that demonstrates the intended identity without a dramatic
+  emotional arc.
+
+If the user's direction conflicts with the Cast voice notes, surface the
+conflict and ask which direction should win before generation.
+
+After generation:
+
+1. inspect or play the output enough to confirm it is the intended sample;
+2. retain execution's `provenancePath`;
+3. hand the accepted output and that saved provenance file to `casting-director`;
+4. validate and attach a current `castVoiceFileAttachment` document with
+   `renku cast voice attach`.
+
+Do not use `renku media import` for Cast Voice samples. Do not store sample
+paths or provider identities in Cast Design JSON. The attachment's optional
+`voiceIdentity` is opaque provider-owned JSON:
+
+- Seed Audio samples omit it because the sample file itself is the reusable
+  reference.
+- ElevenLabs samples use the provider's durable identity, for example
+  `{"provider":"elevenlabs","voiceId":"<exact-id>"}`.
+
+Discover routes through `generation models list` and find relevant model advice
+by name under `references/model-guides/`. Use the selected schema for supported
+voice and audio inputs.
+
+## In Renku Cloud
+
+Renku Cloud holds no provider keys, so it cannot retrieve an ElevenLabs sample
+or run the sample generation itself. Make every sample through the provider's
+MCP server, as [the Renku Cloud guide](renku-cloud.md) describes:
+
+1. Author and review the request as above. For an ElevenLabs voice, the sample
+   is a short line spoken with the exact `voiceId` through an ElevenLabs speech
+   route, not the retrieval operation.
+2. Get the exact request with `generation native-request`, then send it
+   through the provider's MCP server.
+3. Upload the audio with `renku_upload`, then inspect or play it.
+4. Hand the uploaded path to `casting-director`, which attaches it with
+   `renku cast voice attach`. An ElevenLabs sample keeps its `voiceIdentity`.
+   Leave out `sample.generationProvenance`: you never write provenance
+   yourself, and the attachment takes no recorded job, so do not record one.

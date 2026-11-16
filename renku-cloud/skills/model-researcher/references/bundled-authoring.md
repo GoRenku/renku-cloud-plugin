@@ -1,0 +1,118 @@
+# Bundled model authoring
+
+Use this workflow when the user explicitly requests a model addition or guidance
+refresh for the Studio Skills distribution. For example:
+
+> Add this model on Fal.ai to the Studio Skills distribution with researched
+> prompting guidance. Leave the source changes ready for review.
+
+## Work in the source checkout
+
+Use the user's `studio-skills` checkout and read its `CONTRIBUTING.md` and
+applicable repository instructions. If the checkout cannot be located, ask for
+its path; an installed plugin cache is not an authoring destination. Inspect the
+working tree and preserve unrelated changes.
+
+Do not run `generation models import` or `remove` for bundled authoring: those
+commands mutate the personal library. A personal entry is not a prerequisite.
+If the user asks to promote existing personal research, read the relevant notes
+and adapt the reusable advice without copying private Project details or treating
+personal preferences as universal defaults. Leave the personal files intact.
+
+## Update the existing discovery and guidance files
+
+Read the selected provider Skill and Media Producer's guidance-resolution
+instructions in this checkout. Research the exact requested routes using
+[source-research.md](source-research.md), then make focused edits:
+
+- In `skills/<provider-skill>/references/supported-routes.json`, add or update
+  the exact `apiId` and display `name` inside the existing provider's `routes`
+  array. The `provider` belongs to the containing document. Preserve namespaces,
+  endpoint variants, and pinned versions. Update an existing exact route instead
+  of duplicating it; include only variants within the user's request.
+- Write useful model advice beneath `model-guides/image/`, `video/`, or `audio/`.
+  Use a focused Markdown file; split out operation advice only when it warrants
+  separate treatment. Apply the research and editorial review in
+  [source-research.md](source-research.md): cover model-specific craft, relevant
+  operation differences, original examples, and useful failure/rewrite advice
+  supported by the evidence. Preserve strong existing material. Link prompting
+  sources separately from route references and identify agent recommendations.
+  Reuse shared advice rather than duplicating it. Each model normally gets a
+  guide consumed by existing Skills, not a new top-level Skill.
+- Put provider-specific notation and input-ordering advice in the provider
+  Skill's `references/adapters/` only when useful, and link it from that Skill.
+  These adapters are Markdown guidance, not executable provider code. Live schemas remain the
+  authority for current request fields and constraints.
+
+A route can still be saved without a guide or provider advice. For an ordinary
+addition, first search for useful guidance rather than treating route discovery
+as completed research. If specialized research remains unavailable, report that
+limit and retain only useful supported advice; do not invent guidance to fill
+the structure. An explicit route-only request does not need prompting research.
+Do not copy provider schemas into the repository or introduce a new registry.
+An unsupported execution protocol needs separate runtime work; a bundled entry
+must not imply that authoring guidance enabled it.
+
+## Add Codex panel support as guide data
+
+Codex panels are purpose-owned and model-neutral: the dialogue direction panel
+([dialogue-direction-panels.md](../../media-producer/references/dialogue-direction-panels.md))
+and the image edit panel
+([image-edit-panels.md](../../media-producer/references/image-edit-panels.md)).
+A model reaches a panel only through a `## Codex panel` section in its
+canonical model guide. Adding one changes no Studio code.
+
+- **When to add a block.** Add one for a route of a panel purpose
+  (`dialogue-direction` for dialogue audio, `image-edit` for edits) when the
+  route fits the panel's interaction vocabulary: for dialogue, a Script Layout
+  (`line-scripts` or `range-prompt`), a Voice Binding (`speaker-voices` or
+  `voice-references`), and one-line and optional range operations; for image
+  edit, a whole-image instruction with optional Region Modes and an optional
+  style reference. Also confirm a Skill workflow can supply what the binding
+  needs, such as a provider voice identity for every speaker.
+- **The block.** Write one fenced `json` block per purpose, in the format the
+  panel reference documents. `routes` is an array of provider route entries,
+  so one guide can cover several providers or several models on one provider.
+  Every entry's provider must have a provider Skill and its `model` must be in
+  that Skill's `supported-routes.json`. A provider and model appears in at most
+  one block per purpose.
+- **Choosing `controlPointers`.** List only the few native settings a director
+  changes between iterations, usually one to three, as JSON Pointers into the
+  native request. Check each against the live schema: it must be a scalar
+  (string, number, integer, boolean or enum) with a default the panel can start
+  from. Never restate kinds, bounds or options in the guide; the live schema
+  supplies them. Leave out settings that must stay fixed for the panel to work,
+  such as an aspect setting that keeps regions aligned, and say so in prose.
+- **Prose.** Beside the block, explain how to author the initial direction,
+  how to map the consumed route-neutral draft into the native request, and why
+  the listed controls are the relevant ones. Provider placement and mention
+  rules stay in the provider adapters; link them.
+- **Product gaps.** When a model needs an interaction shape outside the
+  vocabulary, such as mask-based editing or an edit route without a whole-image
+  instruction, add no block. Report it to the user as a Studio product gap that
+  needs a panel vocabulary decision, and keep the conversational flow for that
+  route. Never describe a model with a field the vocabulary lacks.
+
+## Verify and hand off
+
+Run `pnpm test` from the source repository root. Inspect the full diff and
+find each changed model's advice by filename or model name, then follow its
+Markdown links. Automated validation intentionally permits
+absent guidance, so passing it alone does not prove new advice is discoverable.
+Read the changed prose and examples against the actual sources; a discoverable
+file full of generic advice does not complete a guidance refresh.
+
+Exercise a request-preparation walkthrough with the selected route and available
+schema or fixture: confirm Media Producer finds the new advice and applies it
+without generating paid media. For shared guide edits, also inspect affected
+provider routes. Record what was checked and any unavailable schema or execution
+test. Use the scenarios in [../evals/bundled-models.md](../evals/bundled-models.md)
+when evaluating this workflow itself.
+
+Leave the changes ready for review and report the exact routes, guide files,
+research sources, and validation results. Use the repository's existing
+maintainer release process only when publishing is requested. Bundled additions
+reach users through a plugin release; additions within existing provider
+protocols ordinarily need no Studio runtime release. Current bundled advice
+supplies defaults even for personal routes, while explicit personal preferences
+remain effective and personal notes remain untouched.

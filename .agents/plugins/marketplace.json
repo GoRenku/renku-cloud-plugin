@@ -1,0 +1,20 @@
+{
+  "name": "renku-cloud",
+  "interface": {
+    "displayName": "Renku Cloud"
+  },
+  "plugins": [
+    {
+      "name": "renku-cloud",
+      "source": {
+        "source": "local",
+        "path": "./renku-cloud"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Video / Media"
+    }
+  ]
+}

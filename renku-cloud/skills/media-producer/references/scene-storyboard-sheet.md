@@ -1,0 +1,412 @@
+# Scene Storyboard Sheet Purpose
+
+Purpose: `scene.storyboard-sheet`
+
+Target: `scene:<scene-id>`
+
+Use this purpose to create a new or materially recomposed Beat Storyboard
+candidate. If the user chooses one exact existing Beat image as the canvas and
+wants named changes while the unaffected image remains continuous, stop this
+recipe and use `image.edit` through `image-operation-routing.md`. Supplying an
+existing image as a continuity or Additional reference does not turn this
+purpose into an edit.
+
+Beat Storyboards are pre-production story-alignment artifacts. They visualize
+the ordered narrative developments already authored in Scene Beats so the
+director, screenwriter, and collaborators can discuss clarity, emotional
+progression, pace, and timing. They do not define production coverage, lenses,
+camera movement, rigs, lighting setups, or an edit plan; route that work to
+Shot Planner.
+
+## Prerequisite Check
+
+Complete this check before generation context, provider selection, prompt
+authoring, configuration, or image generation. Reuse verified current Project
+and prerequisite state from the calling skill; refresh missing or changed state.
+
+1. Read the Project's Storyboard Lookbook with
+   `renku lookbook show --kind storyboard --project <project-name> --json`
+   when its authored state is unknown. `CORE_LOOKBOOK_NOT_AUTHORED` means the
+   definition is missing. A Production Lookbook, existing Storyboard images,
+   or a preferred image provider does not supply that definition.
+2. If the definition is missing, explain the gap and ask whether the user
+   wants to create the Storyboard visual language themselves first or wants
+   the agent to propose one through `lookbook-designer`. Wait for their choice.
+   If they choose agent authoring, present a concrete visual direction and get
+   confirmation before applying it or generating its media. The initial
+   question may include a concrete proposal, so one reply can confirm both
+   agent authoring and that direction. Reuse an already confirmed direction;
+   do not ask again for the same decision. A broad
+   Storyboard request, a generic `continue`, Codex built-in availability, or
+   `askBeforeGenerating: false` does not confirm a visual-language proposal.
+   Never silently choose a medium or substitute Production Lookbook styling.
+3. Resolve each requested Scene and read
+   `renku screenplay beats context --scene <scene-id> --project <project-name> --json`
+   when its saved Beat state is unknown. Whole-screenplay coverage requires
+   checking every requested Scene; one Scene's revision does not establish
+   readiness for the others.
+4. If a Scene has no saved Beats for the requested revision, load
+   `scene-beat-designer/SKILL.md` and its Beat design, JSON contract, and CLI
+   workflow references before authoring. For first creation, use that workflow
+   to design and persist the narrative-appropriate Beats. Use its mutation
+   report's exact revision and Beat ids for the next step. Preserve existing
+   revisions; let the Beat workflow handle retained history, empty revisions,
+   or requested changes. Do not invent transient Beats in an image prompt or
+   write Beat JSON from this media recipe.
+
+While the visual-language choice is pending, read-only Scene and Beat checks
+may continue. Do not apply a Lookbook, author Beats, or prepare/generate images
+to advance this Storyboard request until that choice is resolved. Missing
+Lookbook **media** is distinct from a missing authored **definition**: with an
+authored definition, follow the reference guidance below. This is agent
+workflow guidance, not a Core creative-content validator.
+
+## Required Workflow
+
+If the user names a production reference such as `Scene 22` or `22A`, resolve it
+before building the target:
+
+```bash
+renku screenplay scene-number resolve --number <production-number> --json
+```
+
+Use the returned durable `sceneId` in the attachment target and Scene Beats
+revision reads. Do not add a duplicate production-number field.
+
+1. After completing the prerequisite check, resolve the exact saved Scene
+   Beats revision and requested Beat batch, then read
+   one complete deterministic briefing:
+
+   ```bash
+   renku generation context \
+     --purpose scene.storyboard-sheet \
+     --target scene:<scene-id> \
+     --revision <scene-beats-revision-id> \
+     --beat <beat-id>
+   ```
+
+   Repeat `--beat` for each Beat in the batch. Core returns them in canonical
+   revision order with the related subjects, designs, Lookbook, prior Beat
+   images, and subject continuity suggestions.
+2. Inspect the returned candidates that are useful for this request. A current
+   Storyboard Lookbook Sheet is usually the strongest appearance authority,
+   but its absence is a context gap rather than a Core blocker. With an authored
+   Storyboard Lookbook definition, the agent/user may use another source or
+   proceed without a Sheet after considering the tradeoff. This does not permit
+   proceeding with an unauthored visual language.
+3. Determine the exact requested or missing Beat ids. Scene Beat authoring may
+   contain any narrative-appropriate number of Beats. Do not add, remove,
+   merge, split, pad, reorder, or rewrite Beats for image-generation cost.
+4. Partition only the requested saved Beats, in revision order, into
+   consecutive groups of at most four. The standard batch is the next four. A
+   one-to-three-Beat batch is valid for the final remainder, an exact smaller
+   subset requested by the user, or a real selected-path reference-capacity
+   constraint. Never invent filler Beats or silently drop a needed reference.
+5. For each batch, use the returned exact narrative and continuity context, inspect
+   exact reference files, reason about visible action, stage each panel, and
+   synthesize the provider prompt as described below.
+6. Use explicit user direction, then `workflowPolicy`, to choose the provider.
+   Choose a supported model and input mode conversationally, then read the
+   provider's current native operation facts. An edit-capable provider route
+   does not change this focused creation purpose to `image.edit`.
+7. Write one temporary review document per batch. Follow
+   [generation review routing](generation-review-routing.md): with Ask Before
+   Generating on, panel Submit without Studio Preview, or the Studio Preview or
+   text path outside Codex Desktop. Validate Engines requests and apply the generation type-specific authorization rules,
+   reread before execution, rebuild native prompt
+   fields after edits, then execute through the chosen generation type.
+8. Follow `image-output-review.md`. Inspect and automatically attach the result
+    without output acceptance or attachment confirmation. Strict iterative review requires
+    explicit user opt-in and a deliberately changed, newly reviewed request
+    after a visual failure. For a one-Beat request, inspect the complete full-
+    canvas image without putting it in a grid. For a multi-Beat composite,
+    identify only actual Beat panel image blocks, crop through the existing
+    vision-guided workflow, and inspect every Beat crop. Never crop or import a
+    layout-only placeholder cell. Quality findings remain advisory; the user
+    may explicitly accept an imperfect result.
+
+## Prompt Inputs
+
+Gather:
+
+- the exact Scene and Scene Beats revision;
+- selected Beat ids, titles, descriptions, narrative developments, narrative
+  purposes, Cast Member ids, Location ids, Prop ids, and Screenplay Block ids;
+- `targetContext.contextText` as opaque authored narrative context;
+- the current Storyboard Lookbook and any deliberately selected appearance
+  reference;
+- exact records and visually inspected sheets for Cast Members, Locations,
+  and Props used by the batch;
+- useful prior accepted Beat images only when they can be attached through a
+  real provider-visible reference; and
+- the selected execution path's current model/tool guide, input shape,
+  reference capacity, and size controls.
+
+Use the batch-scoped `targetContext`; Core has already resolved and ordered the
+related Cast Members, Locations, and Props. Read each
+candidate's `oneLineSummary`, `referenceName`, and complete `tags` list, then
+inspect its pixels and available generation request/provenance. Prefer a
+suitable same-owner sheet whose tags include the exact string `storyboard`.
+Check exact membership across the whole list; tag order conveys no priority.
+The tag is evidence of intended use, not proof of visual correctness. Reject a
+tagged candidate that is stale, visibly unsuitable, tied to the wrong wardrobe
+or state, or rendered against an obsolete appearance authority. Never choose
+from candidate order. Each Cast Member's `wardrobe` in the batch context names
+the Scene's costume; the costume's picked sheet leads `cast-continuity` with
+`isWorkflowSelected: true` and is the default when no storyboard sheet of that
+same costume exists.
+
+When no suitable tagged sheet exists, inspect every eligible same-owner sheet
+and deliberately choose the best continuity match. Untagged and differently
+tagged Production sheets remain valid fallbacks. Keep the fallback in a
+continuity-only role, keep the Storyboard Lookbook Sheet as the sole appearance
+authority, report the increased style-leakage risk in quality feedback, and
+offer to prepare a dedicated Storyboard continuity sheet without blocking the
+request solely because `storyboard` is absent. Deliberately reuse accepted
+subject-owned references across Scenes and batches when continuity should
+remain unchanged.
+
+If a visible subject has no useful same-owner continuity sheet, do not infer a
+Project relationship from a filename or prompt. Consider preparing a focused
+continuity sheet, using a user-supplied reference, or proceeding without that
+anchor. The choice remains agent/user judgment rather than a generation gate.
+
+Reason about the visible event that communicates each Beat's narrative
+development and the visual emphasis that serves its narrative purpose without
+pasting that abstract purpose into the prompt. Deliberately choose subject
+scale and placement, body pose, gaze, emotional read, action, interaction,
+Location geography and landmarks, Prop state and holder, foreground and
+background relationships, cross-panel continuity, provisional viewpoint, and
+details to exclude.
+
+The Scene Beats revision decides the narrative moments to illustrate. It does
+not define camera Shots. Any framing or composition chosen for a panel is a
+provisional agent-owned choice for that artifact, not Beat persistence or a
+production coverage decision.
+
+## Reference Roles And Appearance Authority
+
+Every attached reference has one non-overlapping role:
+
+- the Storyboard Lookbook Sheet controls medium, realism level, linework,
+  finish, lighting treatment, grade, texture, and detail density;
+- Character Sheets control canonical identity, facial and body features,
+  silhouette, proportions, costume, hair, and distinguishing details;
+- Location Sheets control canonical geography, landmarks, architecture, set
+  dressing, and recognizable environmental features; and
+- Prop Sheets control canonical construction, geometry, scale, materials,
+  markings, condition, and Beat-specific state.
+
+Tell the model to reproduce continuity subjects faithfully while re-rendering
+them only in the Storyboard Lookbook's visual language. A realistic continuity
+sheet never makes the Storyboard realistic unless the Storyboard Lookbook says
+so. A coarse or hand-drawn Lookbook may simplify small details, but identity,
+silhouette, costume, construction, geography, and other defining features must
+remain unmistakable.
+
+Name every prompt-visible reference with the exact token determined by the
+selected provider's final native array order.
+Use wording equivalent to:
+
+```text
+Reference 1 — Storyboard appearance authority:
+Render every panel only in this reference's visual language.
+
+Reference 2 — Character continuity authority:
+Preserve identity, facial and body features, silhouette, proportions, costume,
+hair, and distinguishing details. Re-render the Character in Reference 1's
+Storyboard style; do not copy Reference 2's source lighting, finish, or realism.
+```
+
+Apply equivalent exact invariant wording to Locations and Props.
+
+## Review criteria
+
+Review the exact requested Beat coverage and count-specific layout; complete
+Project-ratio panel compositions; Storyboard Lookbook appearance; selected
+continuity-reference fidelity; absence of Production rendering-style leakage;
+readable narrative action, geography, and Prop interaction; and usable vision-
+guided crops for occupied Beat cells only. Apply the selected review mode from
+`image-output-review.md`; never turn these checks into runtime validation.
+
+## Prompt Synthesis
+
+Treat narrative fields as reasoning evidence, not provider payloads. Do not
+paste `facts.contextText`, full Beat JSON, an abstract `narrativePurpose`
+paragraph, untranslated `narrativeDevelopment`, internal ids as visible
+labels, or invented Shot Planner camera/coverage prose.
+
+For a complex one-to-four-Beat request, use this stable order:
+
+1. Artifact and goal.
+2. Reference roles and the preserve-versus-restyle contract.
+3. Panel 1 through Panel N visible direction.
+4. Cross-panel and cross-batch continuity.
+5. Appearance traits derived only from the Storyboard Lookbook.
+6. The exact count-specific composite layout below and high-resolution output
+   requirements.
+7. Exclusions and text/label rules.
+
+Each panel description must be concrete and action-focused. State visible
+subjects, viewpoint, framing, scale, placement, gaze, action, spatial
+relationships, Location geography, and Prop interaction when they matter.
+
+## When Codex Is On Or Off
+
+The Codex review document is:
+
+```json
+{
+  "provider": "codex",
+  "model": "chatgpt-images-2.5",
+  "mediaKind": "image",
+  "prompt": "<exact reviewed prompt>",
+  "request": {
+    "prompt": "<exact reviewed prompt>",
+    "images": [
+      { "$file": "tmp/scratch/storyboard-lookbook.png", "mimeType": "image/png", "reviewLabel": "Storyboard Lookbook style reference" }
+    ]
+  }
+}
+```
+
+Put the Storyboard Lookbook first and pass every selected local image through
+the built-in tool's reference inputs. Put the high-resolution full-composite
+requirement in the exact prompt because the current built-in envelope has no
+structured `image_size` or `quality` field. Inspect actual dimensions and do
+not invent a pixel guarantee, provider receipt, or unsupported structured
+fields for this built-in request.
+
+When the Image Generation type provider is Fal.ai or the user selects it, use
+`fal-ai/openai/gpt-image-2/edit`. Put every provider-visible reference in
+`image_urls` and choose a current provider-supported custom `image_size`
+near the route's reliable high-resolution boundary while preserving the
+composite layout. Recheck current constraints rather than hardcoding one
+universal size. Leave `num_images` absent when the one-image default is correct;
+omit `input_fidelity` when the current route processes references at high
+fidelity automatically.
+
+This provider route remains `purpose: scene.storyboard-sheet`. Never use this
+recipe for a localized source-preserving change merely because the route can
+accept the prior image; a true edit uses the locked `image.edit` source slot.
+
+## Sheet Layout
+
+- one high-resolution full storyboard image on an output canvas supported by
+  the selected model, not a thumbnail sheet;
+- one to four Beat panels; incomplete two-by-two composites also use explicit
+  layout-only placeholder cells so every grid cell has a stable boundary;
+- every complete panel uses the Project aspect ratio from current Project info;
+- Beats arranged in Scene Beats revision order;
+- a clean grid with clear gutters and panel image areas suitable for vision-guided cropping;
+- no cropped, stretched, overlapping, or merged panel image regions;
+- unused canvas space may remain empty instead of becoming filler imagery;
+- labels only in margins, headers, or gutters, never inside the panel image content.
+
+Put the exact batch-size layout in the reviewed provider prompt. Define the
+occupied layout region independently from the model-supported output canvas so
+the canvas may keep unused margins around it:
+
+- one panel: use the complete output canvas as one Project-ratio Beat image;
+  do not put it in a grid or surround it with unused placeholder cells;
+- two panels: define a fixed two-by-two grid region whose outer rectangle uses
+  the Project aspect ratio, place Panel 1 upper-left and Panel 2 upper-right,
+  and fill the lower-left and lower-right cells with visibly bounded,
+  low-detail layout placeholders. Give each placeholder a complete cell border
+  and only sparse neutral construction marks, such as two faint corner-to-corner
+  diagonals. Give the placeholders no people, Locations, Props, objects, text,
+  labels, captions, or narrative imagery;
+- three panels: use the same fixed two-by-two Project-ratio grid region, place
+  Panels 1 and 2 across the upper row and Panel 3 lower-left, and fill the
+  lower-right cell with one visibly bounded, low-detail layout-only
+  placeholder. Give that placeholder a complete cell border and only sparse
+  neutral construction marks, such as two faint corner-to-corner diagonals.
+  Give it no people, Locations, Props, objects, text, labels, captions, or
+  narrative imagery; and
+- four panels: fill the fixed two-by-two Project-ratio grid region in Beat
+  order.
+
+A two-by-two grid region with the same outer aspect ratio as the Project gives
+every cell that same aspect ratio. For a two-Beat remainder, use the two visible
+placeholder cells to establish the lower row's geometry, explicitly prohibit
+two full-width stacked strips, and tell the model not to enlarge the Beat
+panels into the placeholder cells. For a three-Beat remainder, use the visible
+fourth placeholder cell to establish the lower row's geometry and prevent the
+model from treating the lower-right area as unconstrained canvas. In both
+cases, treat placeholders only as disposable layout scaffolding: they are not
+Beats, never receive Beat ids, and must not be cropped, imported, or persisted.
+Do not rely on generic phrases such as `two-panel layout` or `three-panel
+layout` to communicate this geometry, and do not invent filler Beats or
+duplicate Beat content.
+
+For a known Project aspect ratio, state that ratio explicitly for the occupied
+cell image areas and the outer two-by-two grid rectangle. If the selected
+model has no structured output-size control, extra model canvas may remain as
+letterbox or sheet margin, but it must not determine the cell proportions.
+For example, in a 16:9 Project, require an exact 16:9 outer grid rectangle
+inside any supported model canvas, with four equal cells and the fourth
+placeholder fully bounded. Do not attach a multi-panel result when an
+occupied crop has a different aspect ratio unless the user explicitly accepts
+the mismatch; regenerate or revise the candidate first. A blank placeholder
+is useful only when it is a bounded fourth cell inside the same grid geometry,
+not when it is unbounded unused canvas.
+
+The composite canvas does not need to match the Project aspect ratio. Its size
+and aspect ratio follow the selected model's supported output. Every Beat panel
+has equal visual priority and enough area for a durable crop; layout-only
+placeholder cells stay deliberately low-detail. Do not falsely claim that each
+crop has the pixel dimensions of a separate full-canvas generation. Inspect
+actual composite dimensions and every Beat crop.
+
+Do not use fixed crop coordinates, OCR, marker detection, border detection,
+grid slicing, runtime auto-splitting, or a new crop dependency.
+
+## Import Shape
+
+```json
+{
+  "sceneBeatsRevisionId": "scene_beats_revision_foundry_v1",
+  "title": "Foundry storyboard package",
+  "select": true,
+  "beats": [
+    {
+      "beatId": "beat_001",
+      "source": "tmp/media/foundry-storyboard-sheet-1-beat-001.png",
+      "sourcePurpose": "scene.storyboard-sheet"
+    },
+    {
+      "beatId": "beat_005",
+      "source": "tmp/media/foundry-storyboard-sheet-2-beat-005.png",
+      "sourcePurpose": "scene.storyboard-sheet"
+    }
+  ]
+}
+```
+
+Import with:
+
+```bash
+renku media import \
+  --purpose scene.storyboard-sheet \
+  --target scene:<scene-id> \
+  --revision <scene-beats-revision-id> \
+  --file tmp/operations/scene-storyboard-import.json
+```
+
+For one source file, pass exactly one `--beats <beat-id>`.
+
+The grouped document must state one explicit `select` choice. Use `true` when
+these accepted crops should become the current images for their Beats. Use
+`false` when deliberately importing additional candidates without changing
+existing selections. Do not import and then issue one selection command per
+Beat.
+
+Every Beat id must belong to the target Scene Beats revision. Files must be
+project-relative. Each imported crop becomes an ordinary Asset owned by its
+logical Scene Beat. Do not persist crop boxes, extraction confidence, grid
+layout, composite sheet files, or other agent-side mechanics.
+
+Core keeps every accepted import batch in the Scene-local numbered iteration
+folder. Never move, flatten, rename, or reuse an existing iteration folder.
+Reactivating an older Scene Beats revision reconnects its retained Beat ids and
+images without copying files.

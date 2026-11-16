@@ -1,0 +1,77 @@
+# Fal.ai Reference Input Adapter
+
+Use the selected route's live schema as final field authority. This adapter owns
+only Fal.ai request placement and provider-visible mention syntax; canonical
+model guides own prompt craft.
+
+MiniMax H3 Image standard and Highspeed edit use ordered `image_urls` with
+one-based spaced `Image 1`, `Image 2` mentions. Put the edit base first.
+Follow [H3 Image guidance](../../../media-producer/references/model-guides/image/minimax-h3-image.md)
+for reference roles and casting continuity. The exact route schemas were
+checked 2026-11-10.
+
+- Image edit routes place ordered source/reference markers in their current
+  native image field. When the selected route documents `@ReferenceN`, derive
+  `N` from final request order.
+- FLUX 3 Image edit (`blackforestlabs/flux-3/edit-image`) takes ordered
+  `image_urls`. Put the edit base first: it is `image 1` in prose and
+  `ref_image_0` in bounding-box rows, and it decides `aspect_ratio: auto`.
+  Later images are `image N` and `ref_image_<N-1>`. Fal passes BFL's in-prompt
+  bounding-box JSON through unchanged inside `prompt`; there is no separate box
+  field. Verified with one paid edit on 2026-10-11.
+- Seedance reference-to-video derives `@ImageN`, `@VideoN`, and `@AudioN` from
+  final modality-local array order.
+- Kling 4.0 reference-to-video uses `@ImageN` for `image_urls`, `@VideoN`
+  for `video_urls`, `@ElementN` for `elements`, and `@VoiceN` for `voice_ids`,
+  each one-based within that field. Opening/middle/ending frame fields count
+  toward image limits but the documented numbered image mentions refer to
+  `image_urls`; do not import Replicate's combined numbering. Provider voice
+  ids are not local audio-file markers. The
+  [reference API](https://fal.ai/models/kling/v4/reference-to-video/api) was
+  checked 2026-10-27; recheck the selected schema before request authoring.
+- Kling 4.0 Flash reference-to-video uses one-based `@ImageN`, `@VideoN`,
+  and `@ElementN` within `image_urls`, `video_urls`, and `elements` respectively.
+  Its optional first frame is implicit and counts toward the image limit.
+  Flash video editing places the source marker in `video_url` as `@Video1`;
+  additional `video_urls` start at `@Video2`. Flash does not accept voice
+  elements or voice ids. The [reference API](https://fal.ai/models/kling/v4/flash/reference-to-video/api)
+  and [edit API](https://fal.ai/models/kling/v4/flash/video-to-video/api) were
+  checked 2026-11-04. Read [Flash guidance](../../../media-producer/references/model-guides/video/kling-4.0-flash.md)
+  for prompt craft and inspect the exact selected schema for limits.
+- MiniMax H3 and H3 Max reference-to-video derive spaced `Image N`, `Video N`,
+  and `Audio N` mentions from final modality-local array order. Do not add `@`.
+  For H3 Max, Fal.ai's live schema on 2026-09-01 allowed up to 9 images, 3
+  videos, and 3 audio clips, with at most 12 reference files combined. Treat
+  these dated counts as discovery context only and re-check the live schema
+  before authoring each request.
+- Gemini Omni Flash 1.1 reference-to-video derives zero-based
+  `<IMAGE_REF_0>` and `<VIDEO_REF_0>` mentions from final modality-local array
+  order. Its current live schema does not expose reference audio; do not invent
+  an audio field or mention.
+- Wan 3.0 Prime reference-to-video derives one-based spaced `Image N`,
+  `Video N`, and `Audio N` mentions from final modality-local array order. A
+  document or public webpage in the route's singular native field has no
+  numbered mention; describe its narrow role without inventing a token.
+- Singular opening and ending frame fields are implicit unless the exact route
+  documentation establishes a prompt-visible mention. Do not invent one.
+- A singular source video for Gemini Omni Flash 1.1 edit is implicit. Put it in
+  `video_url` and write a direct edit instruction without inventing a video
+  mention.
+- Native audio generation is not uploaded reference-audio support. Apply the
+  shared Dialogue Audio continuity policy only when the exact selected live
+  route exposes an uploaded audio reference field.
+- The current Fal Omni index exposes text, image, reference, and edit routes but
+  no continuation route. Do not repurpose edit for model continuation.
+- Never copy native fields, counts, bounds, or defaults from this adapter; read
+  them from `generation schema show` immediately before authoring the request.
+
+## Seedance 2.5 route evidence
+
+Verified 2026-09-08 against the exact
+[reference-to-video API schema](https://fal.ai/models/bytedance/seedance-2.5/reference-to-video/api).
+Use `image_urls`, `video_urls`, `audio_urls` with `@ImageN`, `@VideoN`, `@AudioN`
+from final modality-local order. The route overview's bracket-style examples are
+not the API field descriptions; use the API contract. At this check the schema
+allows 4–30 seconds output and uploaded image/video/audio references together.
+Recheck live limits and enum types before submission. No paid run established
+motion-transfer or dialogue-sync fidelity.

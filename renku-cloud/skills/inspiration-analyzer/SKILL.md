@@ -1,0 +1,157 @@
+---
+name: inspiration-analyzer
+description: Analyze a Renku Studio Visual Language Inspiration folder from its stored image files, then validate and write a project-native Inspiration Analysis JSON document through the Renku CLI.
+---
+
+# Inspiration Analyzer
+
+## Renku Cloud
+
+When the Renku tools (`renku_command`, `renku_upload`, `renku_download`,
+`renku_view`, `renku_guide`) are present, Renku runs in Renku
+Cloud. This section then applies and takes precedence over any instruction
+below to stop when `renku` is unavailable.
+
+- Run the `renku ...` commands a step needs as one `renku_command` batch:
+  `{"commands": [{"args": ["inspiration", "list", "--json"]}], "onFailure": "stop"}`.
+  There is no shell, so no pipes, redirects or `$(...)`. A command that needs
+  an id from an earlier answer goes in a second batch.
+- Your workbench is on your computer: the documents you write, saved answers
+  and notes. Send a document a command reads in that command's `files`, keyed
+  by the `tmp/` path the command names.
+- An answer over 100,000 characters, or any answer when `saveAnswers` is true,
+  comes back as a download link. Fetch it with `curl` and read it on your
+  computer.
+- Read this skill's own files from the installed plugin.
+
+For an Inspiration folder:
+
+- `folder.absolutePath` is a path in Renku Cloud, so `cd` and `find` there
+  do not work from your computer. Use `folder.projectRelativePath` instead.
+- Download the whole folder in one `renku_download` call,
+  `{"folders": ["<folder.projectRelativePath>"]}`; it comes as one `.tar`.
+  Unpack it on your computer and inspect every supported image there at full
+  size. `renku_view` gives quick looks of up to 1,024 pixels.
+
+This skill requires the installed Renku runtime. If `renku` is unavailable, stop and direct the user to `https://gorenku.com`; do not substitute ad hoc files for the CLI-owned project state.
+
+## Project Workspace
+
+Keep every agent-created working file inside the current Project's categorized
+`tmp/` tree. Never create operation JSON, Generation Specs, import manifests,
+QA images, downloads, crops, or scratch files at the Project root.
+
+- Use `tmp/operations/` for CLI authoring documents, including create, update,
+  design, analysis, Lookbook, Scene Beats, Shot Plan, and import JSON.
+- Use `tmp/operations/media-generation/` for Media Producer review and
+  provenance documents.
+- Use `tmp/media/` for temporary generated, downloaded, transformed, or cropped
+  media; use `tmp/qa/` for review evidence and `tmp/scratch/` for other temporary
+  inputs.
+- Create category folders lazily. Let Renku commands copy accepted content into
+  durable owner folders; never construct durable asset paths in the skill.
+- Keep an external user source outside the Project when possible. If a temporary
+  in-Project copy is necessary, place it under `tmp/scratch/`.
+
+
+Use this skill to analyze a Renku Studio Inspiration folder as a cinematographer-focused visual reference study.
+
+The folder already exists in a Renku Studio project. Renku owns the folder metadata and persisted analysis JSON. The image files have folder-owned AssetFile records. Inspect their exact stored bytes with normal shell commands; use the registered IDs and paths from the folder resource.
+
+## Start Here
+
+1. Resolve the Renku project.
+2. Find or confirm the Inspiration folder.
+3. Use the folder name as a creative and research hint.
+4. Inspect every supported image file in the folder.
+5. Write a complete `kind: "inspirationAnalysis"` JSON document.
+6. Write it through the Renku CLI when authoring is authorized; the write validates.
+7. Confirm persistence from the returned analysis. Read again only when that report is insufficient or state changed.
+
+Ask only when a missing choice materially changes the analysis. If the user wants momentum, make clear assumptions and proceed.
+
+For an authorized known-folder update, show plus write is the expected two-call
+CLI sequence; inspect all source images between those calls. The write report
+contains the persisted analysis.
+
+## Project Preflight
+
+For an existing project:
+
+Use the known project name with `--project <project-name>`; no `project open` is needed.
+
+If the user did not provide a folder ID, list folders:
+
+```bash
+renku inspiration list --project <project-name> --json
+```
+
+Inspect the chosen folder:
+
+```bash
+renku inspiration show --folder <folder-id> --project <project-name> --json
+```
+
+Use the returned `folder.name` as context and `folder.absolutePath` as the filesystem location.
+
+## Analyze A Folder
+
+1. Treat the folder name as a serious hint. It may be a movie title, director, cinematographer, photographer, painter, movement, period, place, or production phrase chosen to improve the analysis.
+2. If the name points to a known reference, use reliable context to sharpen what you look for: collaborators, era, format, genre, visual movement, director signatures, cinematographer signatures, production context, or recurring visual strategies.
+3. Inspect the folder contents directly:
+
+```bash
+cd "<folder.absolutePath>"
+find . -maxdepth 1 -type f
+```
+
+4. Analyze every supported image file, not only favorite frames.
+5. Keep every persisted claim grounded in the actual images. Context can guide interpretation, but the analysis should not become a biography or trivia note.
+
+## Write And Validate
+
+Create a JSON file matching `references/inspiration-analysis-json-contract.md`.
+
+For validation-only requests or a review pause, validate without writing:
+
+```bash
+renku inspiration analysis validate --folder <folder-id> --file tmp/operations/inspiration-analysis.json --project <project-name> --json
+```
+
+Write:
+
+```bash
+renku inspiration analysis write --folder <folder-id> --file tmp/operations/inspiration-analysis.json --project <project-name> --json
+```
+
+Read back only if the mutation report lacks needed detail, the outcome is uncertain, or relevant state changed:
+
+```bash
+renku inspiration analysis show --folder <folder-id> --project <project-name> --json
+```
+
+## Reference Files
+
+- Read `references/inspiration-analysis-cli-workflow.md` for command order and report handling.
+- Read `references/inspiration-analysis-json-contract.md` before writing JSON.
+- Read `references/cinematography-analysis-guidelines.md` before doing the visual analysis.
+- Use `samples/analysis.json` and `samples/the-substance-analysis.json` as quality examples for depth, specificity, and section coverage. Replace every value with observations from the user's folder.
+
+## Non-Negotiables
+
+- Do not download images from FilmGrab or the web for this workflow.
+- Do not write directly to `.renku/project.sqlite`.
+- Do not write per-image database records directly. Use `asset import` for new downloads; existing uploads and migrated files are already registered.
+- Do not store absolute paths in the JSON document.
+- Do not use project-relative paths in `imageFiles`; use folder-local filenames.
+- Core validates the write before persistence. Separate `validate` is required only for validation-only intent or a review pause.
+- Do not omit images that are present unless the file is unreadable or not a supported image.
+- Do not invent director, cinematographer, year, or production history from the folder name. Use known information when it is reliable; otherwise qualify it as inference or leave it out.
+
+## Quality Bar
+
+- Write for working cinematographers: concrete, visual, and repeatable.
+- Explain what each visual strategy does, not only what it looks like.
+- Cite filenames only when they visibly demonstrate the claim.
+- Prefer one strong supporting image over several weak ones.
+- Treat `inspiredBy` as visual lineage or affinity unless the user supplied confirmed source information.

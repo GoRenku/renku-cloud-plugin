@@ -1,0 +1,13 @@
+{
+  "name": "renku-cloud",
+  "owner": {
+    "name": "Kerem Karatal"
+  },
+  "plugins": [
+    {
+      "name": "renku-cloud",
+      "source": "./renku-cloud",
+      "description": "Renku filmmaking skills connected to Renku Cloud."
+    }
+  ]
+}

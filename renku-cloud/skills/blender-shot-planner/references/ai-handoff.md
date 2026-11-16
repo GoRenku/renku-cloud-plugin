@@ -1,0 +1,51 @@
+# Handoff to Media Producer
+
+For multiple duration-limited clips, Media Producer reads its
+`references/shot-plan-video/scene-segmentation.md`. Carry full remaining dialogue
+and actions, not just planned elapsed times. Simple Previs never defines finished
+surface detail or prop artwork; establish independent finished-look references.
+
+Pass the exact `revisions[].id` chosen from `renku shot-plan previs show` as
+attachment context. Media Producer uses `--previs-revision <id>` with the existing
+video-generation media import, including when submitting a derivative of that
+render. Do not infer the id from newest revision, timestamps or prompt prose.
+This id belongs outside the provider-native request and provenance envelope.
+
+Media Producer registers chosen extracted frames, Previs clips and audio excerpts
+with `renku shot-plan reference import`, preserving this exact Plan/revision.
+The provider request uses returned registered AssetFile paths, not temporary
+preparation paths. Follow Media Producer's `references/workflow.md`.
+
+Give `media-producer` the exact Project/Scene/Shot Plan, reviewed Previs revision
+and registered video Asset/file, source parameters, duration/fps, proxy identities,
+locked actions and dialogue timing. Hand off the selected audio intent when present.
+Use its `references/shot-plan-video/blender-previs.md` workflow; reread current
+Core generation context there. Do not create a replacement placeholder plan.
+
+Include the chosen revision's complete cinematic description, authored according
+to `directing-workflow.md`. Keep attachment ids, reference bindings, timing maps
+and execution notes separate from that prose. Media Producer must apply
+`references/model-guides/shared/prompt-input-visibility.md` from its own skill
+before finalizing the provider request; a model cannot infer this session's
+feedback or recognize an earlier take that is not supplied.
+
+H3 Max is the default for this workflow; explicit Seedance 2.5, Seedance 2.0 or
+Wan 3.0 choices win. Check the exact route's current limits early. The video is
+motion/geography/camera reference; character/location sheets supply appearance.
+Lookbook text can inform prompt wording, without another Lookbook image.
+
+Keep master timing. The Harbor 17-to-15-second derivative scaled every event by
+15/17: a three-second hold became 2.647 seconds. Get agreement before changing
+locked timing, retain the master and record the submitted derivative/time map in
+existing generation evidence and the AI take's existing Asset summary so tmp
+cleanup does not erase the map. Map dialogue cues too; never silently stretch selected
+speech. AI reference conditioning does not guarantee exact motion or speech timing.
+
+### Preserve timeline intent
+
+Read the selected revision with `shot-plan previs show --revision <id> --json`. Carry its shot
+segments, cuts and explicit dialogue-turn direction into the provider-native
+handoff, using the selected model's documented capabilities. Never infer cuts
+from captions or duplicate a turn that crosses a cut. Disclose derivative time
+maps separately: equal elapsed seconds in Studio do not prove AI alignment.
+Keep exact revision attachment and existing provider review/provenance unchanged.

@@ -1,0 +1,187 @@
+---
+name: screenplay-analyst
+description: Analyze a Renku Studio screenplay through renku screenplay analyze, author evidence-backed three-act Screenplay Analysis JSON and Character Arcs for the main characters, validate them, and persist them through the CLI without mutating scenes.
+---
+
+# Screenplay Analyst
+
+## Renku Cloud
+
+When the Renku tools (`renku_command`, `renku_upload`, `renku_download`,
+`renku_view`, `renku_guide`) are present, Renku runs in Renku
+Cloud. This section then applies and takes precedence over any instruction
+below to stop when `renku` is unavailable.
+
+- Run the `renku ...` commands a step needs as one `renku_command` batch:
+  `{"commands": [{"args": ["screenplay", "status", "--json"]}], "onFailure": "stop"}`.
+  There is no shell, so no pipes, redirects or `$(...)`. A command that needs
+  an id from an earlier answer goes in a second batch.
+- Your workbench is on your computer: the documents you write, saved answers
+  and notes. Send a document a command reads in that command's `files`, keyed
+  by the `tmp/` path the command names.
+- An answer over 100,000 characters, or any answer when `saveAnswers` is true,
+  comes back as a download link. Fetch it with `curl` and read it with jq,
+  sed or a script on your computer.
+- Read this skill's own files, including `samples/`, from the installed
+  plugin.
+
+For analysis:
+
+- `screenplay analyze context` for a feature can pass 100,000 characters.
+  Read it in parts with `--scenes <a-b>`, or fetch its download link and read
+  the file on your computer. `screenplay show --text` gives the screenplay
+  itself as text.
+- Still write one complete analysis with a `sceneAnalyses` entry for every
+  Scene: build it on your computer, then send it in `files`.
+  `screenplay analyze validate` answers with the issues only.
+- Read back part of an analysis with
+  `screenplay analyze show --active --scenes <a-b>`.
+
+This skill requires the installed Renku runtime. If `renku` is unavailable, stop and direct the user to `https://gorenku.com`; do not substitute ad hoc files for the CLI-owned project state.
+
+## Project Workspace
+
+Keep every agent-created working file inside the current Project's categorized
+`tmp/` tree. Never create operation JSON, Generation Specs, import manifests,
+QA images, downloads, crops, or scratch files at the Project root.
+
+- Use `tmp/operations/` for CLI authoring documents, including create, update,
+  design, analysis, Lookbook, Scene Beats, Shot Plan, and import JSON.
+- Use `tmp/operations/media-generation/` for Media Producer review and
+  provenance documents.
+- Use `tmp/media/` for temporary generated, downloaded, transformed, or cropped
+  media; use `tmp/qa/` for review evidence and `tmp/scratch/` for other temporary
+  inputs.
+- Create category folders lazily. Let Renku commands copy accepted content into
+  durable owner folders; never construct durable asset paths in the skill.
+- Keep an external user source outside the Project when possible. If a temporary
+  in-Project copy is necessary, place it under `tmp/scratch/`.
+
+
+Use this skill to critique the current Renku Studio screenplay and persist a durable Screenplay Analysis, plus a Character Arc for each protagonist and key supporting role.
+
+A Screenplay Analysis is critique, evidence, scoring, and suggested improvements. It does not rewrite the screenplay and does not create scene rows.
+
+## Start Here
+
+1. Resolve or open the Renku project.
+   If the user names `Scene 22`, `22A`, or another production scene number,
+   resolve it with `renku screenplay scene-number resolve --number
+   <production-number> --json` before focusing the critique.
+2. Read the current analysis context.
+3. Read `analysisMethod.supported` and `analysisMethod.sourceActMode` before
+   doing model work:
+
+   - `flat`: derive three analytical Act segments from canonical Scene order.
+     Every FDX-backed Screenplay uses this mode. Do not look for or infer Acts
+     from Final Draft New Act, End of Act, Sequence, Outline, Note, marker text,
+     or retained source XML.
+   - `sourceThreeAct`: use the three source Act Scene memberships exactly and
+     critique weak boundaries through analysis `critique.suggestions`. This
+     mode is available only from canonical Renku-authored Act organization,
+     never from FDX markers.
+   - `unsupported`: stop before authoring or generation and explain the
+     three-act-only restriction from the returned reason.
+4. Author a complete Screenplay Analysis JSON document.
+5. Use separate validation for validation-only intent or a review pause.
+6. Fix any validation errors returned by the owning command.
+7. Write through the Renku CLI. An ordinary “Analyze this screenplay” request
+   always creates a new analysis revision and makes it active.
+8. Write the Character Arcs for the protagonists and key supporting roles
+   in the same request: author the complete set, validate it, and write it
+   with `renku cast arc` (see `references/character-arc-cli-workflow.md`). A
+   re-analysis always rewrites the arcs too.
+9. Report the active analysis id, the most important critique, and which
+   Cast Members got arcs (and their arc types).
+
+Ask only when a missing creative choice materially changes the critique. If the user wants momentum, make a clear assumption and proceed.
+
+## Project Preflight
+
+For a named project:
+
+Open the project first, so the analysis and the Character Arcs act on the same
+project:
+
+```bash
+renku project open <project-name> --json
+```
+
+Read the analysis context:
+
+```bash
+renku screenplay analyze context --project <project-name> --json
+```
+
+Optional orientation:
+
+```bash
+renku studio current --json
+```
+
+## Validate And Persist
+
+Create a JSON file that matches `references/screenplay-analysis-json-contract.md`.
+
+For validation-only requests or a review pause, validate without writing:
+
+```bash
+renku screenplay analyze validate --file tmp/operations/screenplay-analysis.json --project <project-name> --json
+```
+
+Write:
+
+```bash
+renku screenplay analyze write --file tmp/operations/screenplay-analysis.json --project <project-name> --json
+```
+
+Read back only if the mutation report lacks needed detail, the outcome is uncertain, or relevant state changed:
+
+```bash
+renku screenplay analyze show --active --project <project-name> --json
+```
+
+## Reference Files
+
+- Read `references/screenplay-analysis-cli-workflow.md` for command order and report handling.
+- Read `references/screenplay-analysis-json-contract.md` before writing JSON.
+- Read `references/screenplay-analysis-guidance.md` before critiquing story structure.
+- Use `samples/three-act-analysis.json` as a structural example only.
+- Read `references/character-arc-guidance.md` before writing arcs, and
+  `references/character-arc-cli-workflow.md` for the arc commands.
+- Use `samples/character-arcs.json` as a structural example of arcs only;
+  its ids are placeholders.
+
+## Non-Negotiables
+
+- Do not write directly to `.renku/project.sqlite`.
+- Do not call any Screenplay mutation command while analyzing. Analysis never
+  creates, updates, moves, deletes, or organizes screenplay content.
+- Do not create scene rows for suggested additions.
+- Do not use screenplay Act or Sequence Section ids in analysis JSON. For
+  `sourceThreeAct`, copy the returned Scene membership into the three
+  `actSegments` without storing Section ids or alternate boundaries.
+- Partition every current Scene exactly once, in canonical order, across the
+  three `actSegments`; do the same across `sceneGroups` when groups are present.
+- Include every accepted key-beat role exactly once. Omit `sceneId` when the
+  screenplay does not yet embody a beat instead of inventing a placement.
+- Do not invent timings, runtime, page counts, or post-production metadata.
+- Cite scene ids and evidence when making critique claims.
+- Use production numbers in transient user-facing prose when helpful, but keep
+  persisted Screenplay Analysis JSON references durable-id-only.
+- Keep suggestions actionable enough for a later screenplay operation agent to apply.
+- Write validates before persistence; keep separate validation for validation-only requests or review.
+- Use US spelling: `analyze`, not `analyse`.
+- Character arcs cover only protagonists and key supporting roles. One
+  person is one Cast Member at every age, with one arc for the whole life;
+  ages are Looks of that Cast Member.
+- Arcs cite real Scene ids and real dialogue; never invent events or
+  quotes.
+
+## Quality Bar
+
+- Give useful critique with evidence, not generic praise.
+- Score only declared criteria.
+- Default criteria are Dramatic Energy, Stakes, and Character Agency.
+- Tie every major claim to the current screenplay context.
+- Treat suggested scene additions as options for the user to review.

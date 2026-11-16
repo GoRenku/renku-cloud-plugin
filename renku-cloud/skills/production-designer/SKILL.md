@@ -1,0 +1,167 @@
+---
+name: production-designer
+description: Create and revise Renku Studio Location and Prop facts, Location Design and Prop Design documents, set dressing, atmosphere, continuity guidance, and Location/Prop media readiness. Use when the user asks for production design, locations, spatial design, props, set dressing, or atmosphere.
+---
+
+# Production Designer
+
+## Renku Cloud
+
+When the Renku tools (`renku_command`, `renku_upload`, `renku_download`,
+`renku_view`, `renku_guide`) are present, Renku runs in Renku
+Cloud. This section then applies and takes precedence over any instruction
+below to stop when `renku` is unavailable.
+
+- Run the `renku ...` commands a step needs as one `renku_command` batch:
+  `{"commands": [{"args": ["location", "list", "--json"]}], "onFailure": "stop"}`.
+  There is no shell, so no pipes, redirects or `$(...)`. A command that needs
+  an id from an earlier answer goes in a second batch.
+- Your workbench is on your computer: the documents you write, saved answers
+  and notes. Send a document a command reads in that command's `files`, keyed
+  by the `tmp/` path the command names.
+- An answer over 100,000 characters, or any answer when `saveAnswers` is true,
+  comes back as a download link. Fetch it with `curl` and read it with jq,
+  sed or a script on your computer.
+- Library files come down in one `renku_download` call. Read this skill's own
+  files from the installed plugin. The permission steps below do not apply to
+  Renku commands.
+
+For production design:
+
+- Read the screenplay as text with `screenplay show --text`, adding
+  `--scenes <a-b>` for part of it.
+- Download every supporting file's `projectRelativePath` in one
+  `renku_download` call and read them on your computer.
+- Look at Location and Prop sheets and hero images with `renku_view`, or
+  download the originals to judge fine detail.
+- Location Worlds (World Labs) are not available in Renku Cloud, so do not
+  hand a World request to `location-world-producer` there. Existing Worlds
+  still show in Studio.
+
+This skill requires the installed Renku runtime. If `renku` is unavailable, stop and direct the user to `https://gorenku.com`; do not substitute ad hoc files for the CLI-owned project state.
+
+## Efficient Command Use
+
+Location, Prop, production-design, and location world commands act on the project named by --project, or on the current authoring project when --project is omitted. Use the same project throughout an unchanged iteration. Apply operation documents for related fact changes; retain meaningful dry-run review. Apply/design write enforce validation; separate validate is for validation-only intent or a review pause. Mutation reports confirm their returned changes, but read missing authored detail when needed. Keep immediate pre-enrichment reads and post-enrichment verification.
+
+Consult the relevant CLI reference/help once if syntax is unknown, then reuse verified syntax for this task. Do not discover syntax by attempting mutations. Do not invent `project list`. If a known permission denial blocks cache/output/config or local-network access, explain the requirement and use the authorized host permission flow; do not repeat the denied attempt, read secrets, disable cache persistence, or change permissions. `CLI026` means the mutation succeeded: report the notification warning without replaying the mutation.
+
+## Project Workspace
+
+Keep every agent-created working file inside the current Project's categorized
+`tmp/` tree. Never create operation JSON, Generation Specs, import manifests,
+QA images, downloads, crops, or scratch files at the Project root.
+
+- Use `tmp/operations/` for CLI authoring documents, including create, update,
+  design, analysis, Lookbook, Scene Beats, Shot Plan, and import JSON.
+- Use `tmp/operations/media-generation/` for Media Producer review and
+  provenance documents.
+- Use `tmp/media/` for temporary generated, downloaded, transformed, or cropped
+  media; use `tmp/qa/` for review evidence and `tmp/scratch/` for other temporary
+  inputs.
+- Create category folders lazily. Let Renku commands copy accepted content into
+  durable owner folders; never construct durable asset paths in the skill.
+- Keep an external user source outside the Project when possible. If a temporary
+  in-Project copy is necessary, place it under `tmp/scratch/`.
+
+
+Use this skill for Renku Studio production-design work. It owns Location and
+Prop facts plus their department designs, then hands media generation to
+`media-producer`.
+
+Do not route continuity-subject changes through screenplay operations. The
+canonical mutation paths are `renku location` and `renku prop`.
+
+## Start Here
+
+For media-only generation from existing Location or Prop facts/design, route
+directly to `media-producer`. Skip department authoring reads unless the user
+also needs facts or design revised. Resolve an unknown target as needed.
+
+1. Reuse the verified current authoring project. Read it only when missing or changed:
+
+```bash
+renku project current --json
+```
+
+2. For location-level work, read context:
+
+```bash
+renku production-design location context --location <location-id> --json
+```
+
+For Prop work, read:
+
+```bash
+renku prop context --prop <prop-id> --json
+renku production-design prop context --prop <prop-id> --json
+```
+
+Before creating Location or Prop facts, or when the user explicitly asks to
+refresh them after another import, also read the complete canonical Screenplay
+and every active source before authoring:
+
+```bash
+renku screenplay show --project <project-name> --json
+renku asset list --project <project-name> --owner project --type screenplay_supporting_material --limit 200 --json
+```
+
+Follow `nextCursor` with repeated `--cursor <nextCursor>` calls until it is
+`null`; combine every page before authoring.
+
+Resolve each returned file below the current Project's `projectFolder` and use
+the harness reader appropriate to its actual contents. Read current facts
+first, use the combined evidence to write each description into its named
+sections (see `references/location-authoring.md` and
+`references/prop-authoring.md`), preserve
+ambiguous identity as a user question, and do not run this enrichment
+automatically when a file is imported.
+
+3. If a fact needs to change, validate and dry-run the matching
+   `locationOperations` or `propOperations` document before applying it.
+
+```bash
+# Optional validation-only or review step:
+renku location validate --file tmp/operations/location-operations.json --json
+renku location apply --file tmp/operations/location-operations.json --dry-run --json
+renku location apply --file tmp/operations/location-operations.json --json
+```
+
+When this work follows FDX import, use exact Scene-heading, tag, and screenplay
+text candidates as evidence. Ask the user before splitting or merging composite
+settings, or promoting a mentioned object into a durable Prop. Author accepted
+facts through `renku location`/`renku prop`, then hand their durable ids back
+for focused Screenplay setting, mention, or presence references. Never ask the
+importer to create or bind those facts.
+
+4. Write durable Location Design or Prop Design documents through
+   `renku production-design`.
+
+5. Hand off Location Sheet/Hero or Prop Sheet/Hero generation to
+   `media-producer`. Hand off a four-flat-image Auto Layout 3D Location World
+   request to `location-world-producer` only after the Location facts, complete
+   prose design, authoritative plan, and reviewed Production Location Sheet are
+   ready. Do not hand off a panorama workflow.
+
+## Reference Files
+
+- Read `references/location-authoring.md` for Location fact commands.
+- Read `references/location-design.md` before writing Location Design JSON.
+- Read `references/prop-authoring.md` for Prop fact commands.
+- Read `references/prop-design.md` before writing Prop Design JSON.
+- Read `references/media-and-scene-beats-handoff.md` before asking for Location Sheets.
+
+## Boundaries
+
+- Location Design is not a shot list.
+- Generated files, asset ids, and media paths do not belong in Location Design JSON.
+- Keep location-local set dressing in `recurringObjects`. Do not infer or
+  promote those entries into first-class Props.
+- Prop Sheets are request-scoped references; Prop Heroes are the only
+  canonical Prop image selection.
+- FDX candidates are non-authoritative evidence. Do not infer facts from them
+  automatically and do not report ScriptNotes or formatting exclusions.
+- Supporting material is import-only context for fact/design authoring. Never
+  include its file paths or copied contents in Location/Prop Sheet, Hero, World,
+  Media Producer, Scene Beats, Shot Plan, or Screenplay Analysis handoffs; those
+  workflows consume the durable Location, Prop, and department-design prose.

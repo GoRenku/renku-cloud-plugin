@@ -1,0 +1,170 @@
+{
+  "opening": [
+    {
+      "key": "opening-fade",
+      "type": "transition",
+      "text": "FADE IN:"
+    }
+  ],
+  "scenes": [
+    {
+      "key": "foundry-scene",
+      "heading": "INT. EDIRNE FOUNDRY - NIGHT",
+      "title": "The First Pour",
+      "blocks": [
+        {
+          "key": "foundry-action",
+          "type": "action",
+          "text": "Urban studies the great bombard beside the furnace."
+        },
+        {
+          "key": "urban-dialogue",
+          "type": "dialogue",
+          "characterName": "URBAN",
+          "extensions": [],
+          "parts": [
+            {
+              "key": "urban-direction",
+              "type": "parenthetical",
+              "text": "to the apprentice"
+            },
+            {
+              "key": "urban-speech",
+              "type": "speech",
+              "text": "The metal remembers every mistake."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "wall-scene",
+      "heading": "EXT. THEODOSIAN WALLS - DAWN",
+      "title": "The Wall Waits",
+      "blocks": [
+        {
+          "key": "wall-action",
+          "type": "action",
+          "text": "Smoke thins over the wall as the city waits."
+        }
+      ]
+    }
+  ],
+  "sections": [
+    {
+      "key": "act-one",
+      "type": "act",
+      "title": "The Offer"
+    },
+    {
+      "key": "opening-sequence",
+      "type": "sequence",
+      "title": "The Cannon Wakes"
+    }
+  ],
+  "structure": [
+    {
+      "key": "act-one-entry",
+      "content": {
+        "type": "section",
+        "section": { "key": "act-one" }
+      },
+      "position": 0
+    },
+    {
+      "key": "opening-sequence-entry",
+      "parentSection": { "key": "act-one" },
+      "content": {
+        "type": "section",
+        "section": { "key": "opening-sequence" }
+      },
+      "position": 0
+    },
+    {
+      "key": "foundry-scene-entry",
+      "parentSection": { "key": "opening-sequence" },
+      "content": {
+        "type": "scene",
+        "scene": { "key": "foundry-scene" }
+      },
+      "position": 0
+    },
+    {
+      "key": "wall-scene-entry",
+      "parentSection": { "key": "act-one" },
+      "content": {
+        "type": "scene",
+        "scene": { "key": "wall-scene" }
+      },
+      "position": 1
+    }
+  ],
+  "references": [
+    {
+      "key": "foundry-setting",
+      "subject": {
+        "type": "location",
+        "id": "location_edirne_foundry"
+      },
+      "target": {
+        "type": "scene",
+        "scene": { "key": "foundry-scene" }
+      },
+      "role": "setting"
+    },
+    {
+      "key": "urban-presence",
+      "subject": {
+        "type": "castMember",
+        "id": "cast_urban"
+      },
+      "target": {
+        "type": "scene",
+        "scene": { "key": "foundry-scene" }
+      },
+      "role": "presence"
+    },
+    {
+      "key": "urban-speaker",
+      "subject": {
+        "type": "castMember",
+        "id": "cast_urban"
+      },
+      "target": {
+        "type": "dialogueCue",
+        "scene": { "key": "foundry-scene" },
+        "turn": { "key": "urban-dialogue" }
+      },
+      "role": "speaker"
+    },
+    {
+      "key": "bombard-mention",
+      "subject": {
+        "type": "prop",
+        "id": "prop_great_bombard"
+      },
+      "target": {
+        "type": "block",
+        "scene": { "key": "foundry-scene" },
+        "block": { "key": "foundry-action" }
+      },
+      "role": "mention",
+      "range": {
+        "start": 18,
+        "length": 13
+      }
+    },
+    {
+      "key": "wall-setting",
+      "subject": {
+        "type": "location",
+        "id": "location_theodosian_walls"
+      },
+      "target": {
+        "type": "scene",
+        "scene": { "key": "wall-scene" }
+      },
+      "role": "setting"
+    }
+  ]
+}

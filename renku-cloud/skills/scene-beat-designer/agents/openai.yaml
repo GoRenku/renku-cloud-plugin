@@ -1,0 +1,4 @@
+interface:
+  display_name: "Scene Beat Designer"
+  short_description: "Design and revise numbered Scene Beats."
+  default_prompt: "Use $scene-beat-designer to design or revise Scene Beats for the selected Renku Studio scene."

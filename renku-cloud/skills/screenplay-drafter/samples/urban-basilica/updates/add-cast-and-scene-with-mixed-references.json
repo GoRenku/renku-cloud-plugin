@@ -1,0 +1,68 @@
+{
+  "operations": [
+    {
+      "operation": "scene.add",
+      "scene": {
+        "key": "new-apprentice-arrives",
+        "heading": "INT. EDIRNE FOUNDRY - NIGHT",
+        "title": "The Apprentice Arrives",
+        "blocks": [
+          {
+            "key": "apprentice-action",
+            "type": "action",
+            "text": "Urban notices the apprentice waiting near the molds."
+          },
+          {
+            "key": "apprentice-dialogue",
+            "type": "dialogue",
+            "characterName": "APPRENTICE",
+            "extensions": [],
+            "parts": [
+              {
+                "key": "apprentice-speech",
+                "type": "speech",
+                "text": "I was told the metal sings before it breaks."
+              }
+            ]
+          }
+        ]
+      },
+      "structureEntryKey": "apprentice-scene-entry",
+      "placement": {
+        "parentSection": { "id": "screenplay_section_seq_004" },
+        "at": "end"
+      }
+    },
+    {
+      "operation": "reference.add",
+      "reference": {
+        "key": "apprentice-setting",
+        "subject": { "type": "location", "id": "location_edirne_foundry" },
+        "target": { "type": "scene", "scene": { "key": "new-apprentice-arrives" } },
+        "role": "setting"
+      }
+    },
+    {
+      "operation": "reference.add",
+      "reference": {
+        "key": "urban-presence",
+        "subject": { "type": "castMember", "id": "cast_urban" },
+        "target": { "type": "scene", "scene": { "key": "new-apprentice-arrives" } },
+        "role": "presence"
+      }
+    },
+    {
+      "operation": "reference.add",
+      "reference": {
+        "key": "apprentice-speaker",
+        "subject": { "type": "castMember", "id": "cast_new_apprentice" },
+        "target": {
+          "type": "dialogueCue",
+          "scene": { "key": "new-apprentice-arrives" },
+          "turn": { "key": "apprentice-dialogue" }
+        },
+        "role": "speaker"
+      }
+    }
+  ]
+}
