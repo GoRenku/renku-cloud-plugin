@@ -2,7 +2,11 @@
   "mcpServers": {
     "renku": {
       "type": "http",
-      "url": "https://app.gorenku.com/mcp"
+      "url": "https://app.gorenku.com/mcp",
+      "http_headers": {
+        "Renku-Plugin-Version": "0.5.0"
+      },
+      "headersHelper": "echo '{\"Renku-Plugin-Version\":\"0.5.0\"}'"
     }
   }
 }
