@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "renku": {
+      "type": "http",
+      "url": "https://app.gorenku.com/mcp",
+      "headersHelper": "cat renku-plugin-version.json"
+    }
+  }
+}

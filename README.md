@@ -2,7 +2,7 @@
 
 > **Generated. Do not edit.** The Renku Skills release makes this repository from
 > [GoRenku/studio-skills](https://github.com/GoRenku/studio-skills)
-> v0.5.0 (commit `2a55a537c8e1938384d9fe073cf2dc0cd22fb784`). Every release replaces its contents,
+> v0.5.1 (commit `c58147c63ffc334babf33c13072556b2e938bc1b`). Every release replaces its contents,
 > and GitHub refuses changes from anything but the release. Make skill changes in
 > GoRenku/studio-skills.
 
